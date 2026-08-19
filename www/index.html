@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0a0a0a">
+<title>TV Remote</title>
+<link rel="manifest" href="#" id="manifest-link">
+<link rel="icon" type="image/svg+xml" id="favicon-link">
+<link rel="apple-touch-icon" id="apple-icon-link">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #151515;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #4fc3f7;
+    --accent-dim: #1a3a4a;
+    --text: #f0f0f0;
+    --text-dim: #888;
+    --btn: #1e1e1e;
+    --btn-hover: #2a2a2a;
+    --btn-active: #333;
+    --red: #ef5350;
+    --green: #66bb6a;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 12px 32px;
+    overflow-x: hidden;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 4px 12px;
+  }
+  .status-bar h1 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text);
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .connecting-dots span {
+    display: inline-block;
+    animation: blink 1s infinite;
+    color: #f9a825;
+    font-size: 18px;
+    font-weight: 900;
+  }
+  .connecting-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .connecting-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  .status-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    transition: background 0.3s;
+  }
+  .dot.connected { background: var(--green); }
+
+  /* REMOTE BODY */
+  .remote {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* SECTIONS */
+  .section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 12px;
+    border: 1px solid var(--border);
+  }
+
+  /* TRACKPAD */
+  .trackpad-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .trackpad-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-align: center;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .trackpad {
+    width: 100%;
+    height: 160px;
+    background: var(--surface2);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    position: relative;
+    cursor: pointer;
+    touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .trackpad:active { border-color: var(--accent); }
+  .trackpad-hint {
+    font-size: 12px;
+    color: var(--border);
+    pointer-events: none;
+    user-select: none;
+    text-align: center;
+    line-height: 1.8;
+  }
+  .trackpad-ripple {
+    position: absolute;
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0;
+    transform: scale(0);
+    pointer-events: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .trackpad-ripple.show {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+  .trackpad-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .tp-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.1s, transform 0.1s;
+  }
+  .tp-btn:active { background: var(--btn-active); transform: scale(0.96); }
+  .tp-btn.click-btn {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* TOP ROW - POWER + SOURCE + SETTINGS */
+  .top-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* BUTTON BASE */
+  .btn {
+    background: radial-gradient(circle at 35% 35%, #3a3a3a, #1a1a1a);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    user-select: none;
+    transition: background 0.1s;
+    -webkit-user-select: none;
+    position: relative;
+    box-shadow: 0 8px 0 #000, 0 10px 20px rgba(0,0,0,0.5), inset 0 -4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+    overflow: hidden;
+  }
+  .btn:active {
+    background: radial-gradient(circle at 35% 35%, #2a2a2a, #151515);
+    box-shadow: 0 2px 0 #000, inset 0 -1px 3px rgba(0,0,0,0.4);
+    transform: translateY(4px);
+  }
+  .btn .icon {
+    font-size: 20px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .btn.power { color: var(--red); }
+  .btn.power .icon { color: var(--red); }
+  .btn.accent-btn { border-color: var(--accent-dim); }
+  .btn.accent-btn .icon { color: var(--accent); }
+
+  /* STREAMING ROW */
+  .stream-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .stream-btn {
+    background: var(--btn);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+    padding: 10px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.1s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+  .stream-btn:active { background: var(--btn-active); transform: scale(0.95); }
+  .stream-btn.netflix { color: #e50914; }
+  .stream-btn.youtube { color: #ff0000; }
+  .stream-btn.prime { color: #00a8e0; }
+  .stream-btn.disney { color: #113ccf; }
+
+  /* D-PAD */
+  .dpad-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .dpad-wrap {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 4px;
+    max-width: 180px;
+    margin: 0 auto;
+  }
+  .dpad-btn {
+    background: radial-gradient(circle at 35% 35%, #3a3a3a, #1a1a1a);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 0 #000, inset 0 1px 0 rgba(255,255,255,0.12);
+    font-size: 18px;
+    aspect-ratio: 1;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.1s, transform 0.1s;
+  }
+  .dpad-btn:active { background: radial-gradient(circle at 35% 35%, #2a2a2a, #111); box-shadow: 0 1px 0 #0a0a0a; transform: translateY(3px); }
+  .dpad-ok {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+  .dpad-empty { visibility: hidden; }
+
+  /* VOL/CH CONTROLS */
+  .vol-ch {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 64px;
+  }
+  .vc-group {
+    background: radial-gradient(circle at 35% 35%, #3a3a3a, #1a1a1a);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    overflow: visible;
+    box-shadow: 0 8px 0 #000, 0 10px 20px rgba(0,0,0,0.5), inset 0 -4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  .vc-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .vc-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.1s;
+    color: var(--text);
+  }
+  .vc-btn:active { background: rgba(0,0,0,0.3); }
+  .vc-mid {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 6px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .vc-mid:active { background: rgba(0,0,0,0.3); }
+
+  /* NAV ROW - BACK HOME MENU */
+  .nav-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* NUMBER PAD */
+  .numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .num-btn {
+    background: var(--btn);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+    padding: 14px 8px;
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.1s, transform 0.1s;
+  }
+  .num-btn:active { background: var(--btn-active); transform: scale(0.95); }
+  .num-btn.zero { grid-column: 2; }
+  .num-btn.del-btn { color: var(--text-dim); font-size: 14px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #222;
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    transition: transform 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* CONNECT OVERLAY */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 100;
+    padding: 24px;
+  }
+  .overlay h2 { font-size: 20px; font-weight: 700; }
+  .overlay p { font-size: 14px; color: var(--text-dim); text-align: center; line-height: 1.6; }
+  .overlay-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .overlay-btn:active { opacity: 0.8; }
+  .overlay-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+  }
+  .overlay-input:focus { border-color: var(--accent); }
+  .overlay-label { font-size: 13px; color: var(--text-dim); }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- CONNECT OVERLAY -->
+<div class="overlay" id="overlay" style="display:none;">
+  <div style="font-size:40px">📺</div>
+  <h2>TV Remote</h2>
+  <p>Enter your Samsung TV IP address to connect.<br>Your TV must be on the same WiFi.</p>
+  <label class="overlay-label">TV IP Address</label>
+  <input class="overlay-input" id="ip-input" type="text" value="192.168.68.106" placeholder="192.168.68.106" inputmode="decimal">
+  <button class="overlay-btn" onclick="startConnect()">Connect to TV</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- SETTINGS PANEL -->
+<div id="settings-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;">
+  <div style="width:100%;max-width:320px;background:var(--surface);border-radius:16px;padding:20px;border:1px solid var(--border);display:flex;flex-direction:column;gap:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:16px;font-weight:700;">⚙ Settings</span>
+      <button onclick="closeSettings()" style="background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:12px;">
+      <div style="font-size:11px;color:var(--text-dim);font-weight:700;letter-spacing:1px;margin-bottom:8px;">CONNECTION</div>
+      <a id="cert-link" href="https://192.168.68.106:8002" target="_blank" style="display:block;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--accent);font-size:11px;font-weight:700;padding:8px;text-align:center;margin-bottom:8px;text-decoration:none;">🔐 Trust Certificate (tap if not connecting)</a>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">TV IP: <span id="settings-ip" style="color:var(--accent);"></span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button onclick="closeSettings();document.getElementById('overlay').style.display='flex';" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-size:12px;font-weight:700;padding:10px;cursor:pointer;">Switch TV</button>
+        <button onclick="disconnect();closeSettings();" style="background:transparent;border:1px solid var(--red);border-radius:8px;color:var(--red);font-size:12px;font-weight:700;padding:10px;cursor:pointer;">Disconnect</button>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:12px;">
+        <div style="font-size:11px;color:var(--text-dim);font-weight:700;letter-spacing:1px;margin-bottom:8px;">DIGI BRIDGE</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Bridge IP: <span id="bridge-ip-display" style="color:var(--accent);">192.168.68.100:8765</span></div>
+        <div style="display:flex;gap:8px;">
+          <input id="bridge-ip-input" type="text" value="192.168.68.100" placeholder="192.168.68.100" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px;outline:none;">
+          <button onclick="updateBridgeIp()" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;">Save</button>
+        </div>
+      </div>
+  </div>
+</div>
+
+<!-- REMOTE UI -->
+<div class="status-bar">
+  <h1 id="app-title">📺 TV Remote</h1>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="status-dot" id="tv-status-dot" style="display:flex;"></div>
+    <div class="status-dot" id="digi-status-dot" style="display:none;"></div>
+    <button id="apps-btn" onclick="showAppsLauncher()" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:16px;width:32px;height:32px;cursor:pointer;align-items:center;justify-content:center;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button onclick="showSettings()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:16px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;">⚙</button>
+  </div>
+</div>
+
+<!-- DEVICE SWITCHER -->
+<div style="width:100%;max-width:380px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+  <button id="btn-samsung" onclick="switchDevice('samsung')" style="padding:10px;border-radius:10px;border:2px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 0 #0a0a0a,inset 0 1px 0 rgba(255,255,255,0.08);">📺 Samsung TV</button>
+  <button id="btn-digi" onclick="switchDevice('digi')" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);color:var(--text-dim);font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 0 #0a0a0a,inset 0 1px 0 rgba(255,255,255,0.08);">📡 DIGI Decoder</button>
+</div>
+
+<div class="remote" id="samsung-remote">
+  <!-- TOP ROW: POWER / SOURCE / SETTINGS -->
+  <div class="section">
+    <div class="top-row">
+      <button class="btn power" onclick="tvPower()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef5350" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 3v9"/>
+          <path d="M6.3 5.3a9 9 0 1 0 11.4 0"/>
+        </svg>
+      </button>
+      <button class="btn accent-btn" onclick="sendKey('KEY_SOURCE')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2" stroke-linecap="round">
+          <rect x="2" y="7" width="20" height="15" rx="2"/>
+          <polyline points="17 2 12 7 7 2"/>
+        </svg>
+      </button>
+      <button class="btn" onclick="sendKey('KEY_MENU')">
+        <span class="icon">⚙️</span>
+      </button>
+    </div>
+  </div>
+
+  
+
+  
+
+  <!-- D-PAD + VOL/CH -->
+  <div class="section">
+    <div class="dpad-section">
+
+      <!-- VOL -->
+      <div class="vol-ch">
+        <div class="vc-group">
+          <div class="vc-label" style="pointer-events:none;">VOL</div>
+          <div class="vc-btn" onmousedown="startRepeat('KEY_VOLUP','vol',1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()" ontouchstart="startRepeat('KEY_VOLUP','vol',1)" ontouchend="stopRepeat()">＋</div>
+          <div class="vc-mid" onclick="toggleMute()" id="mute-btn" style="display:flex;align-items:center;justify-content:center;padding:6px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round" id="mute-svg">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <line x1="23" y1="9" x2="17" y2="15" stroke="#ef5350"/>
+              <line x1="17" y1="9" x2="23" y2="15" stroke="#ef5350"/>
+            </svg>
+          </div>
+          <div class="vc-btn" onmousedown="startRepeat('KEY_VOLDOWN','vol',-1)" onmouseup="stopRepeat()" onmouseleave="stopRepeat()" ontouchstart="startRepeat('KEY_VOLDOWN','vol',-1)" ontouchend="stopRepeat()">－</div>
+        </div>
+      </div>
+
+      <!-- D-PAD CIRCLE -->
+      <div style="position:relative;flex:1;aspect-ratio:1;max-width:170px;max-height:170px;flex-shrink:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="90 90 320 320" width="100%" height="100%" style="filter:drop-shadow(0 8px 0 #000) drop-shadow(0 12px 20px rgba(0,0,0,0.8));">
+          <defs>
+            <radialGradient id="sectorGrad" cx="40%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#4a4a4a"/>
+              <stop offset="100%" stop-color="#1e1e1e"/>
+            </radialGradient>
+          </defs>
+          <!-- UP sector -->
+          <path d="M 338.874 130.914 L 277.951 193.101 C 257.967 179.635 231.936 179.534 212.701 192.887 L 148.514 130.004 C 201.815 83.107 283.046 83.527 338.873 130.914 Z" fill="url(#sectorGrad)" stroke="#0a0a0a" stroke-width="3" style="cursor:pointer;" onmousedown="startRepeat('KEY_UP');this.style.fill='#555'" onmouseup="stopRepeat();this.style.fill=''" onmouseleave="stopRepeat();this.style.fill=''" ontouchstart="startRepeat('KEY_UP');this.style.fill='#555'" ontouchend="event.preventDefault();stopRepeat();this.style.fill=''"/>
+          <path d="M 233.182 145.816 L 263.737 145.815 L 248.461 115.26 Z" fill="white" opacity="0.85" pointer-events="none"/>
+          <!-- RIGHT sector -->
+          <path d="M 292.256 206.547 L 353.006 144.537 C 403.15 199.411 405.78 281.844 359.491 336.694 L 295.305 273.812 C 308.703 253.633 307.566 226.472 292.255 206.546 Z" fill="url(#sectorGrad)" stroke="#0a0a0a" stroke-width="3" style="cursor:pointer;" onmousedown="startRepeat('KEY_RIGHT');this.style.fill='#555'" onmouseup="stopRepeat();this.style.fill=''" onmouseleave="stopRepeat();this.style.fill=''" ontouchstart="startRepeat('KEY_RIGHT');this.style.fill='#555'" ontouchend="event.preventDefault();stopRepeat();this.style.fill=''"/>
+          <path d="M 350.005 227.016 L 350.005 257.571 L 376.56 242.293 Z" fill="white" opacity="0.85" pointer-events="none"/>
+          <!-- DOWN sector -->
+          <path d="M 152.636 349.064 L 213.386 287.053 C 233.966 302.208 261.74 302.554 281.729 287.991 L 345.818 350.778 C 291.936 399.044 208.829 398.35 152.637 349.065 Z" fill="url(#sectorGrad)" stroke="#0a0a0a" stroke-width="3" style="cursor:pointer;" onmousedown="startRepeat('KEY_DOWN');this.style.fill='#555'" onmouseup="stopRepeat();this.style.fill=''" onmouseleave="stopRepeat();this.style.fill=''" ontouchstart="startRepeat('KEY_DOWN');this.style.fill='#555'" ontouchend="event.preventDefault();stopRepeat();this.style.fill=''"/>
+          <path d="M 263.116 335.075 L 233.561 335.075 L 247.838 361.63 Z" fill="white" opacity="0.85" pointer-events="none"/>
+          <!-- LEFT sector -->
+          <path d="M 199.649 273.028 L 138.726 335.214 C 89.913 280.03 88.115 198.198 134.716 143.966 L 198.806 206.753 C 185.13 226.36 185.526 252.964 199.649 273.028 Z" fill="url(#sectorGrad)" stroke="#0a0a0a" stroke-width="3" style="cursor:pointer;" onmousedown="startRepeat('KEY_LEFT');this.style.fill='#555'" onmouseup="stopRepeat();this.style.fill=''" onmouseleave="stopRepeat();this.style.fill=''" ontouchstart="startRepeat('KEY_LEFT');this.style.fill='#555'" ontouchend="event.preventDefault();stopRepeat();this.style.fill=''"/>
+          <path d="M 148.898 254.489 L 148.898 224.934 L 122.343 239.212 Z" fill="white" opacity="0.85" pointer-events="none"/>
+          <!-- OK button -->
+          <circle cx="248" cy="242" r="70" fill="var(--accent-dim)" stroke="#4fc3f7" stroke-width="3" style="cursor:pointer;" onclick="sendKey('KEY_ENTER')" onmousedown="this.style.fill='#1e4a5a'" onmouseup="this.style.fill=''" ontouchstart="this.style.fill='#1e4a5a'" ontouchend="this.style.fill=''"/>
+          <text x="248" y="251" text-anchor="middle" fill="#4fc3f7" font-size="26" font-weight="800" font-family="Arial" pointer-events="none">OK</text>
+        </svg>
+      </div>
+
+      <!-- CH -->
+      <div class="vol-ch">
+        <div class="vc-group">
+          <div class="vc-label" style="pointer-events:none;">CH</div>
+          <div class="vc-btn" onmousedown="startRepeat('KEY_CHUP')" onmouseup="stopRepeat()" onmouseleave="stopRepeat()" ontouchstart="startRepeat('KEY_CHUP')" ontouchend="stopRepeat()">＋</div>
+          <div class="vc-mid" onclick="sendKey('KEY_GUIDE')">📋</div>
+          <div class="vc-btn" onmousedown="startRepeat('KEY_CHDOWN')" onmouseup="stopRepeat()" onmouseleave="stopRepeat()" ontouchstart="startRepeat('KEY_CHDOWN')" ontouchend="stopRepeat()">－</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BACK / HOME / INFO -->
+  <div class="section">
+    <div class="nav-row">
+      <button class="btn" onclick="sendKey('KEY_RETURN')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <button class="btn accent-btn" onclick="sendKey('KEY_HOME')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2" stroke-linecap="round">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <polyline points="9 21 9 12 15 12 15 21"/>
+        </svg>
+      </button>
+      <button class="btn" onmousedown="startRepeat('KEY_DEL')" onmouseup="stopRepeat()" onmouseleave="stopRepeat()" ontouchstart="startRepeat('KEY_DEL')" ontouchend="stopRepeat();" style="font-size:18px;">⌫</button>
+      <button style="display:none;" onclick="sendKey('KEY_EXIT')" style="color:var(--red);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef5350" stroke-width="2" stroke-linecap="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- TV MEDIA CONTROLS -->
+  <div class="section">
+    
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
+      <button class="btn" onclick="sendKey('KEY_REWIND')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+      </button>
+      <button class="btn" id="tv-btn-rew"
+        onmousedown="startTvMediaHold('rew')" onmouseup="stopTvMediaHold()" onmouseleave="stopTvMediaHold()"
+        ontouchstart="event.preventDefault();startTvMediaHold('rew')" ontouchend="event.preventDefault();stopTvMediaHold()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>
+      </button>
+      <button class="btn accent-btn" onclick="sendKey('KEY_PLAY')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2" stroke-linecap="round">
+          <polygon points="5 3 15 12 5 21 5 3"/>
+          <line x1="19" y1="4" x2="19" y2="20"/>
+          <line x1="22" y1="4" x2="22" y2="20"/>
+        </svg>
+      </button>
+      <button class="btn" id="tv-btn-fwd"
+        onmousedown="startTvMediaHold('fwd')" onmouseup="stopTvMediaHold()" onmouseleave="stopTvMediaHold()"
+        ontouchstart="event.preventDefault();startTvMediaHold('fwd')" ontouchend="event.preventDefault();stopTvMediaHold()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
+      </button>
+      <button class="btn" onclick="sendKey('KEY_FF')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+      </button>
+    </div>
+  </div>
+
+  
+
+  <!-- TRACKPAD -->
+  <div class="section" id="trackpad-section" style="display:none;">
+    <div style="font-size:10px;font-weight:700;color:var(--text-dim);text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Trackpad · slide to move · tap to click</div>
+    <div id="trackpad" style="width:100%;height:252px;background:var(--surface2);border-radius:12px;border:1px solid var(--border);position:relative;touch-action:none;display:flex;align-items:center;justify-content:center;overflow:hidden;user-select:none;-webkit-user-select:none;">
+      <span id="tp-hint" style="display:none;"></span>
+      <div id="tp-ripple" style="position:absolute;width:60px;height:60px;border-radius:50%;background:var(--accent);opacity:0;transform:scale(0);pointer-events:none;transition:transform 0.25s,opacity 0.25s;"></div>
+      <!-- hidden input to pull up phone keyboard -->
+      <input id="kb-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="position:absolute;opacity:0;width:1px;height:1px;border:none;outline:none;">
+    </div>
+    
+  </div>
+
+
+
+</div>
+</div>
+
+<!-- DIGI DECODER REMOTE -->
+<div class="remote" id="digi-remote" style="display:none;">
+
+  <!-- KEYBOARD INPUT -->
+  <div class="section">
+    
+    <div style="display:flex;gap:8px;">
+      <div style="flex:1;position:relative;display:flex;align-items:center;">
+        <input id="digi-text-input" type="text" placeholder="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          style="width:100%;background:var(--surface2);border:1px solid var(--accent);border-radius:10px;padding:10px 36px 10px 14px;color:var(--text);font-size:15px;outline:none;"
+          oninput="digiTypeRealtime(this.value)">
+        <button onclick="clearDigiInput()" style="position:absolute;right:8px;background:none;border:none;color:var(--text-dim);font-size:16px;cursor:pointer;padding:2px 4px;line-height:1;">✕</button>
+      </div>
+      <button onclick="digiSendText()" style="background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);color:#f0f0f0;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 0 #0a0a0a,inset 0 1px 0 rgba(255,255,255,0.08);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2.5" stroke-linecap="round">
+          <polyline points="9 10 4 15 9 20"/>
+          <path d="M20 4v7a4 4 0 0 1-4 4H4"/>
+        </svg>
+      </button>
+    </div>
+    
+  </div>
+
+  <!-- TOP ROW -->
+  <div class="section">
+    <div class="top-row">
+      <button class="btn power" onclick="digiKey('power')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef5350" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 3v9"/>
+          <path d="M6.3 5.3a9 9 0 1 0 11.4 0"/>
+        </svg>
+      </button>
+      <button class="btn accent-btn" onclick="digiKey('home')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2" stroke-linecap="round">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <polyline points="9 21 9 12 15 12 15 21"/>
+        </svg>
+      </button>
+      <button class="btn" onclick="digiKey('menu')"><span class="icon">⚙️</span></button>
+    </div>
+  </div>
+
+  <!-- DPAD + VOL + CH -->
+  <div class="section">
+    <div class="dpad-section">
+      <!-- VOL -->
+      <div class="vol-ch">
+        <div class="vc-group">
+          <div class="vc-label" style="pointer-events:none;">VOL</div>
+          <div class="vc-btn" onmousedown="startRepeat('vol_up','digi')" onmouseup="stopRepeat()" onmouseleave="stopRepeat()" ontouchstart="event.preventDefault();startRepeat('vol_up','digi')" ontouchend="event.preventDefault();stopRepeat()">＋</div>
+          <div class="vc-mid" onclick="digiKey('mute')" style="display:flex;align-items:center;justify-content:center;padding:10px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <line x1="23" y1="9" x2="17" y2="15" stroke="#ef5350"/>
+              <line x1="17" y1="9" x2="23" y2="15" stroke="#ef5350"/>
+            </svg>
+          </div>
+          <div class="vc-btn" onmousedown="startRepeat('vol_down','digi')" onmouseup="stopRepeat()" onmouseleave="stopRepeat()" ontouchstart="event.preventDefault();startRepeat('vol_down','digi')" ontouchend="event.preventDefault();stopRepeat()">－</div>
+        </div>
+      </div>
+
+      <!-- DPAD CIRCLE -->
+      <div style="position:relative;flex:1;aspect-ratio:1;max-width:170px;max-height:170px;flex-shrink:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="90 90 320 320" width="100%" height="100%" style="filter:drop-shadow(0 8px 0 #000) drop-shadow(0 12px 20px rgba(0,0,0,0.8));">
+          <defs>
+            <radialGradient id="digiSectorGrad" cx="40%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#4a4a4a"/>
+              <stop offset="100%" stop-color="#1e1e1e"/>
+            </radialGradient>
+          </defs>
+          <!-- UP sector -->
+          <path d="M 338.874 130.914 L 277.951 193.101 C 257.967 179.635 231.936 179.534 212.701 192.887 L 148.514 130.004 C 201.815 83.107 283.046 83.527 338.873 130.914 Z" fill="url(#digiSectorGrad)" stroke="#0a0a0a" stroke-width="3" style="cursor:pointer;" onmousedown="this.style.fill='#555';startRepeat('up','digi')" onmouseup="stopRepeat();this.style.fill=''" onmouseleave="stopRepeat();this.style.fill=''" ontouchstart="event.preventDefault();this.style.fill='#555';startRepeat('up','digi')" ontouchend="event.preventDefault();stopRepeat();this.style.fill=''"/>
+          <path d="M 233.182 145.816 L 263.737 145.815 L 248.461 115.26 Z" fill="white" opacity="0.85" pointer-events="none"/>
+          <!-- RIGHT sector -->
+          <path d="M 292.256 206.547 L 353.006 144.537 C 403.15 199.411 405.78 281.844 359.491 336.694 L 295.305 273.812 C 308.703 253.633 307.566 226.472 292.255 206.546 Z" fill="url(#digiSectorGrad)" stroke="#0a0a0a" stroke-width="3" style="cursor:pointer;" onmousedown="this.style.fill='#555';startRepeat('right','digi')" onmouseup="stopRepeat();this.style.fill=''" onmouseleave="stopRepeat();this.style.fill=''" ontouchstart="event.preventDefault();this.style.fill='#555';startRepeat('right','digi')" ontouchend="event.preventDefault();stopRepeat();this.style.fill=''"/>
+          <path d="M 350.005 227.016 L 350.005 257.571 L 376.56 242.293 Z" fill="white" opacity="0.85" pointer-events="none"/>
+          <!-- DOWN sector -->
+          <path d="M 152.636 349.064 L 213.386 287.053 C 233.966 302.208 261.74 302.554 281.729 287.991 L 345.818 350.778 C 291.936 399.044 208.829 398.35 152.637 349.065 Z" fill="url(#digiSectorGrad)" stroke="#0a0a0a" stroke-width="3" style="cursor:pointer;" onmousedown="this.style.fill='#555';startRepeat('down','digi')" onmouseup="stopRepeat();this.style.fill=''" onmouseleave="stopRepeat();this.style.fill=''" ontouchstart="event.preventDefault();this.style.fill='#555';startRepeat('down','digi')" ontouchend="event.preventDefault();stopRepeat();this.style.fill=''"/>
+          <path d="M 263.116 335.075 L 233.561 335.075 L 247.838 361.63 Z" fill="white" opacity="0.85" pointer-events="none"/>
+          <!-- LEFT sector -->
+          <path d="M 199.649 273.028 L 138.726 335.214 C 89.913 280.03 88.115 198.198 134.716 143.966 L 198.806 206.753 C 185.13 226.36 185.526 252.964 199.649 273.028 Z" fill="url(#digiSectorGrad)" stroke="#0a0a0a" stroke-width="3" style="cursor:pointer;" onmousedown="this.style.fill='#555';startRepeat('left','digi')" onmouseup="stopRepeat();this.style.fill=''" onmouseleave="stopRepeat();this.style.fill=''" ontouchstart="event.preventDefault();this.style.fill='#555';startRepeat('left','digi')" ontouchend="event.preventDefault();stopRepeat();this.style.fill=''"/>
+          <path d="M 148.898 254.489 L 148.898 224.934 L 122.343 239.212 Z" fill="white" opacity="0.85" pointer-events="none"/>
+          <!-- OK button -->
+          <circle cx="248" cy="242" r="70" fill="var(--accent-dim)" stroke="#4fc3f7" stroke-width="3" style="cursor:pointer;" onclick="digiKey('ok')" onmousedown="this.style.fill='#1e4a5a'" onmouseup="this.style.fill=''" ontouchstart="this.style.fill='#1e4a5a'" ontouchend="this.style.fill=''"/>
+          <text x="248" y="251" text-anchor="middle" fill="#4fc3f7" font-size="26" font-weight="800" font-family="Arial" pointer-events="none">OK</text>
+        </svg>
+      </div>
+
+      <!-- CH -->
+      <div class="vol-ch">
+        <div class="vc-group">
+          <div class="vc-label" style="pointer-events:none;">CH</div>
+          <div class="vc-btn" onclick="digiKey('ch_up')">＋</div>
+          <div class="vc-mid" onclick="digiKey('guide')">📋</div>
+          <div class="vc-btn" onclick="digiKey('ch_down')">－</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV ROW -->
+  <div class="section">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button class="btn" onclick="digiKey('back')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <button class="btn" onmousedown="startRepeat('del','digi')" onmouseup="stopRepeat()" onmouseleave="stopRepeat()" ontouchstart="event.preventDefault();startRepeat('del','digi')" ontouchend="event.preventDefault();stopRepeat();" style="font-size:22px;padding:16px;">⌫</button>
+    </div>
+  </div>
+
+  <!-- MEDIA CONTROLS -->
+  <div class="section">
+    
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
+      <button class="btn" onclick="digiKey('prev')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+      </button>
+      <button class="btn" id="btn-rew"
+        onmousedown="startMediaHold('rew')" onmouseup="stopMediaHold()" onmouseleave="stopMediaHold()"
+        ontouchstart="event.preventDefault();startMediaHold('rew')" ontouchend="event.preventDefault();stopMediaHold()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>
+      </button>
+      <button class="btn accent-btn" id="digi-playpause-btn" onclick="togglePlayPause()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2" stroke-linecap="round">
+          <polygon points="5 3 15 12 5 21 5 3"/>
+          <line x1="19" y1="4" x2="19" y2="20"/>
+          <line x1="22" y1="4" x2="22" y2="20"/>
+        </svg>
+      </button>
+      <button class="btn" id="btn-fwd"
+        onmousedown="startMediaHold('fwd')" onmouseup="stopMediaHold()" onmouseleave="stopMediaHold()"
+        ontouchstart="event.preventDefault();startMediaHold('fwd')" ontouchend="event.preventDefault();stopMediaHold()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
+      </button>
+      <button class="btn" onclick="digiKey('next')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+      </button>
+    </div>
+  </div>
+
+  
+
+</div>
+
+<script>
+  // ─── CONFIG ───────────────────────────────────────────────
+  let TV_IP = '192.168.68.106';
+  let ws = null;
+  let token = localStorage.getItem('samsung_tv_token') || '';
+  let connected = false;
+  let reconnectTimer = null;
+
+  const APP_NAME = btoa('MyTVRemote');
+
+  // ─── OVERLAY ──────────────────────────────────────────────
+  function startConnect() {
+    const input = document.getElementById('ip-input').value.trim();
+    if (!input) return showToast('Enter a valid IP address');
+    TV_IP = input;
+    localStorage.setItem('tv_ip', TV_IP);
+    document.getElementById('overlay').style.display = 'none';
+    connect();
+  }
+
+  // ─── WEBSOCKET ────────────────────────────────────────────
+    let connecting = false;
+
+  function connect() {
+    if (connecting || (ws && ws.readyState === WebSocket.OPEN)) return;
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    connecting = true;
+    tvState = 'connecting';
+    const url = token
+      ? `wss://${TV_IP}:8002/api/v2/channels/samsung.remote.control?name=${APP_NAME}&token=${token}`
+      : `wss://${TV_IP}:8002/api/v2/channels/samsung.remote.control?name=${APP_NAME}`;
+    const socket = new WebSocket(url);
+    try {
+      ws = socket;
+    } catch(e) {
+      connecting = false;
+      scheduleReconnect();
+      return;
+    }
+
+    ws.onopen = () => {
+      if (socket !== ws) { try { socket.close(); } catch(e){} return; }
+      connecting = false;
+      console.log('WS open');
+    };
+
+        ws.onmessage = (evt) => {
+      try {
+        const msg = JSON.parse(evt.data);
+        if (msg.event === 'ms.channel.connect') {
+          connected = true;
+          tvState = 'connected';
+          tvPoweredOff = false;
+          if (msg.data && msg.data.token) {
+            token = msg.data.token;
+            localStorage.setItem('samsung_tv_token', token);
+          }
+          setTVStatus('connected');
+        } else if (msg.event === 'ms.channel.unauthorized') {
+          showToast('⚠ Check TV – allow the remote connection');
+        } else if (msg.event === 'ms.channel.timeOut') {
+          connected = false;
+          tvState = 'standby';
+          setTVStatus('standby');
+          scheduleReconnect();
+        }
+      } catch(e) {}
+    };
+    ws.onerror = () => {
+      if (socket !== ws) return;
+      connecting = false;
+      connected = false;
+      if (tvState === 'connected') tvState = 'standby';
+      else tvState = 'offline';
+      setTVStatus(tvState);
+    };
+    ws.onclose = () => {
+      if (socket !== ws) return;
+      connecting = false;
+      connected = false;
+      if (tvState === 'connected') tvState = 'standby';
+      setTVStatus(tvState);
+      scheduleReconnect();
+    };
+  }
+
+  function scheduleReconnect() {
+    if (!manualDisconnect && token) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(connect, 1000);
+    }
+  }
+
+  function updateWifiIcon(iconId, state) {return;
+    // state: 'connected' | 'disconnected' | 'connecting' | 'standby'
+    const el = document.getElementById(iconId);
+    if (!el) return;
+    if (state === 'connecting') {
+      el.innerHTML = `<span class="connecting-dots"><span>.</span><span>.</span><span>.</span></span>`;
+    } else if (state === 'standby') {
+      el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f9a825" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    } else {
+      const color = state === 'connected' ? '#66bb6a' : '#ef5350';
+      el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round">${state === 'connected' ? '<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="' + color + '"/>' : '<path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="' + color + '"/>'}</svg>`;
+    }
+  }
+
+  function setTVStatus(state) {
+    if (state === 'connected') {
+      updateWifiIcon('status-text', 'connected');
+    } else if (state === 'standby') {
+      updateWifiIcon('status-text', 'standby');
+    } else if (state === 'connecting') {
+      updateWifiIcon('status-text', 'connecting');
+    } else {
+      updateWifiIcon('status-text', 'disconnected');
+    }
+  }
+
+  function setStatus(ok, text) {
+    updateWifiIcon('status-text', ok ? 'connected' : text.includes('onnect') && !ok ? 'connecting' : 'disconnected');
+  }
+  function setDigiStatus(ok, text) {
+    updateWifiIcon('digi-status-text', ok ? 'connected' : text.includes('onnect') && !ok ? 'connecting' : 'disconnected');
+  }
+
+  // ─── SEND KEY ─────────────────────────────────────────────
+  function sendKey(key) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+
+      connect();
+      return;
+    }
+    const payload = JSON.stringify({
+      method: 'ms.remote.control',
+      params: {
+        Cmd: 'Click',
+        DataOfCmd: key,
+        Option: 'false',
+        TypeOfRemote: 'SendRemoteKey'
+      }
+    });
+    ws.send(payload);
+  }
+
+  // ─── LAUNCH APP ───────────────────────────────────────────
+  function launchApp(appId) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      showToast('Not connected');
+      return;
+    }
+    ws.send(JSON.stringify({ 
+      method: 'ms.channel.emit',
+      params: { event: 'ed.apps.launch', to: 'host', data: { appId, action_type: 'NATIVE_LAUNCH' }}
+    }));
+    setTimeout(() => {
+      ws.send(JSON.stringify({ 
+        method: 'ms.channel.emit',
+        params: { event: 'ed.apps.launch', to: 'host', data: { appId, action_type: 'DEEP_LINK' }}
+      }));
+    }, 500);
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ─── APP LAUNCHER ─────────────────────────────────────────
+  const APP_NAMES = {
+    'com.netflix.mediaclient': 'Netflix',
+    'com.wbd.stream': 'Max',
+    'com.uefa.uefatv.androidtv': 'UEFA TV',
+    'org.videolan.vlc': 'VLC',
+    'com.brave.browser': 'Brave',
+    'la.liga.sports.tv.deporte': 'La Liga',
+    'com.termux': 'Termux',
+    'com.movistarplus.androidtv': 'Movistar+',
+    'com.bstar.intl': 'Bilibili',
+    'com.mutv.manutd': 'MUTV',
+    'com.rtve.androidtv': 'RTVE',
+    'com.cricfytv.sports': 'CricFy TV',
+    'org.schabi.newpipe': 'NewPipe',
+    'com.github.libretube': 'LibreTube',
+    'homeworkout.homeworkouts.noequipment': 'Home Workout',
+    'com.alphainventor.filemanager': 'File Manager',
+    'com.uptodown': 'Uptodown',
+    'com.matchplaygames.pool.android': 'Pool Game',
+    'com.spocky.projengmenu': 'Projectivy'
+  };
+
+  let sharedAppMeta = {};
+
+  function showAppsLauncher() {
+    if (!digiWs || digiWs.readyState !== WebSocket.OPEN) return;
+    
+    // Create modal
+    let modal = document.getElementById('apps-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'apps-modal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:999;display:flex;flex-direction:column;padding:16px;gap:10px;overflow-y:auto;';
+      modal.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#f0f0f0;font-size:16px;font-weight:700;">📱 Apps</span>
+          <button onclick="document.getElementById('apps-modal').remove()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:#ef5350;width:32px;height:32px;cursor:pointer;font-size:18px;">✕</button>
+        </div>
+        <div style="position:relative;display:flex;align-items:center;">
+          <input id="app-search" type="text" placeholder="Search apps..." autocomplete="off"
+            style="width:100%;background:#2a2a2a;border:1px solid #444;border-radius:8px;padding:8px 32px 8px 12px;color:#f0f0f0;font-size:13px;outline:none;"
+            oninput="filterApps(this.value)">
+          <button onclick="document.getElementById('app-search').value='';filterApps('');" 
+            style="position:absolute;right:6px;background:none;border:none;color:#888;font-size:16px;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div id="apps-list" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+          <div style="color:#888;text-align:center;grid-column:span 4;padding:20px;">Loading apps...</div>
+        </div>`;
+      document.body.appendChild(modal);
+    } else {
+      modal.remove();
+      showAppsLauncher();
+      return;
+    }
+
+    // Fetch apps and meta
+    const handler = (e) => {
+      const data = JSON.parse(e.data);
+      if (data.meta) { sharedAppMeta = data.meta; return; }
+      if (!data.apps) return;
+      digiWs.removeEventListener('message', handler);
+      const list = document.getElementById('apps-list');
+      const sortedApps = [...data.apps].sort((a, b) => {
+        const nameA = (sharedAppMeta[a] && sharedAppMeta[a].name) || APP_NAMES[a] || a.split('.').pop();
+        const nameB = (sharedAppMeta[b] && sharedAppMeta[b].name) || APP_NAMES[b] || b.split('.').pop();
+        return nameA.localeCompare(nameB);
+      });
+            allAppsCache = sortedApps;
+      list.innerHTML = sortedApps.map(pkg => renderAppBtn(pkg)).join('');
+    };
+    digiWs.addEventListener('message', handler);
+    digiWs.send(JSON.stringify({action: 'get_app_meta'}));
+    digiWs.send(JSON.stringify({action: 'get_apps'}));
+  }
+
+  let allAppsCache = [];
+
+  function renderAppBtn(pkg) {
+    const colors = ['#e53935','#8e24aa','#1e88e5','#00897b','#f4511e','#6d4c41','#546e7a','#c62828','#283593','#558b2f'];
+    const color = (sharedAppMeta[pkg] && sharedAppMeta[pkg].color) || colors[Math.abs(pkg.split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % colors.length];
+    const meta = sharedAppMeta[pkg] || {};
+    const appLabel = meta.name || APP_NAMES[pkg] || pkg.split('.').pop();
+    const letter = appLabel[0].toUpperCase();
+    return `<button onclick="digiLaunchApp('${pkg}')" oncontextmenu="event.preventDefault();renameApp('${pkg}')" ontouchstart="startAppLongPress('${pkg}')" ontouchend="clearAppLongPress()" style="background:radial-gradient(circle at 35% 35%,#2a2a2a,#1a1a1a);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#f0f0f0;padding:8px 4px;cursor:pointer;box-shadow:0 4px 0 #000;display:flex;flex-direction:column;align-items:center;gap:5px;width:100%;height:80px;overflow:hidden;">
+      <div style="width:36px;height:36px;border-radius:10px;background:${color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;">${letter}</div>
+      <span style="font-size:9px;font-weight:600;text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px;">${appLabel}</span>
+    </button>`;
+  }
+
+  function filterApps(query) {
+    const list = document.getElementById('apps-list');
+    if (!list) return;
+    const q = query.toLowerCase().trim();
+    const filtered = q ? allAppsCache.filter(pkg => {
+      const n = ((sharedAppMeta[pkg] && sharedAppMeta[pkg].name) || APP_NAMES[pkg] || pkg.split('.').pop()).toLowerCase();
+      return n.includes(q);
+    }) : allAppsCache;
+    list.innerHTML = filtered.length ? filtered.map(pkg => renderAppBtn(pkg)).join('')
+      : `<div style="color:#888;text-align:center;grid-column:span 4;padding:20px;">No apps found</div>`;
+  }
+
+  function digiLaunchApp(pkg) {
+    if (!digiWs || digiWs.readyState !== WebSocket.OPEN) return;
+    digiWs.send(JSON.stringify({action: 'launch_app', package: pkg}));
+    document.getElementById('apps-modal')?.remove();
+    const search = document.getElementById('app-search');
+    if (search) search.value = '';
+  }
+
+  let appLongPressTimer = null;
+
+  function startAppLongPress(pkg) {
+    appLongPressTimer = setTimeout(() => renameApp(pkg), 800);
+  }
+
+  function clearAppLongPress() {
+    clearTimeout(appLongPressTimer);
+  }
+
+  const ALL_COLORS = ['#e53935','#c62828','#ad1457','#6a1b9a','#4527a0','#1565c0','#0277bd','#00838f','#2e7d32','#558b2f','#f57f17','#e65100','#4e342e','#37474f','#546e7a','#00897b','#1e88e5','#8e24aa','#f4511e','#6d4c41'];
+
+  function renameApp(pkg) {
+    const current = localStorage.getItem('appname_'+pkg) || APP_NAMES[pkg] || pkg.split('.').pop();
+    const currentColor = localStorage.getItem('appcolor_'+pkg) || '';
+    
+    const modal = document.createElement('div');
+    modal.id = 'rename-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;';
+    modal.innerHTML = `
+      <div style="background:#1e1e1e;border:1px solid #333;border-radius:16px;padding:24px;width:100%;max-width:300px;display:flex;flex-direction:column;gap:16px;">
+        <span style="color:#f0f0f0;font-size:15px;font-weight:700;">Edit App</span>
+        <input id="rename-input" type="text" value="${current}" style="background:#2a2a2a;border:1px solid #4fc3f7;border-radius:8px;padding:10px 12px;color:#f0f0f0;font-size:14px;outline:none;width:100%;">
+        <span style="color:#888;font-size:11px;font-weight:600;">Choose Color</span>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
+          ${ALL_COLORS.map(c => `
+            <div onclick="selectAppColor('${c}')" id="color_${c.replace('#','')}" style="width:100%;aspect-ratio:1;border-radius:8px;background:${c};cursor:pointer;border:3px solid ${c === currentColor ? '#fff' : 'transparent'};"></div>
+          `).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button onclick="document.getElementById('rename-modal').remove()" style="background:#2a2a2a;border:1px solid #333;border-radius:8px;padding:10px;color:#888;cursor:pointer;">Cancel</button>
+          <button onclick="saveAppName('${pkg}')" style="background:#4fc3f7;border:none;border-radius:8px;padding:10px;color:#000;font-weight:700;cursor:pointer;">Save</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('rename-input').focus();
+    document.getElementById('rename-input').select();
+  }
+
+  let selectedAppColor = '';
+
+  function selectAppColor(color) {
+    selectedAppColor = color;
+    ALL_COLORS.forEach(c => {
+      const el = document.getElementById('color_'+c.replace('#',''));
+      if (el) el.style.border = `3px solid ${c === color ? '#fff' : 'transparent'}`;
+    });
+  }
+
+  function saveAppName(pkg) {
+    const input = document.getElementById('rename-input');
+    const name = input ? input.value.trim() : '';
+    const color = selectedAppColor || (sharedAppMeta[pkg] && sharedAppMeta[pkg].color) || '';
+    if (name && digiWs && digiWs.readyState === WebSocket.OPEN) {
+      digiWs.send(JSON.stringify({ action: 'save_app_meta', package: pkg, name, color }));
+      sharedAppMeta[pkg] = { name, color };
+    }
+    selectedAppColor = '';
+    document.getElementById('rename-modal')?.remove();
+    showAppsLauncher();
+  }
+
+  // Reconnect immediately when app comes back to foreground
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (!connected) {
+        manualDisconnect = false;
+        connect();
+      }
+      if (!digiWs || digiWs.readyState !== WebSocket.OPEN) {
+        connectDigi();
+      }
+    }
+  });
+
+    function tvPower() {
+    if (connected) {
+      // TV is on — power off and immediately kill the zombie socket
+      sendKey('KEY_POWER');
+      setTimeout(() => {
+        manualDisconnect = true; // Stop auto-reconnect
+        if (ws) { try { ws.close(); } catch(e){} ws = null; }
+        connected = false;
+      }, 1000);
+    } else {
+      // TV is off — fresh connection attempt with timeout
+      showToast('🔌 Waking TV...');
+      manualDisconnect = false;
+      
+      // Try fresh connection
+      const testWs = new WebSocket(`wss://${TV_IP}:8002/api/v2/channels/samsung.remote.control?name=${APP_NAME}${token ? '&token='+token : ''}`);
+      const timeout = setTimeout(() => {
+        // Connection failed — TV network is asleep — send WoL
+        testWs.close();
+              if (digiWs && digiWs.readyState === WebSocket.OPEN) {
+        digiWs.send(JSON.stringify({ action: 'wol' }));
+      } else {
+        showToast('⚠️ Connect decoder first to wake TV');
+      }
+        // Retry connection after WoL
+        setTimeout(() => connect(), 4000);
+        setTimeout(() => connect(), 8000);
+        setTimeout(() => connect(), 13000);
+      }, 2000);
+      
+      testWs.onopen = () => {
+        // TV responded — use this connection
+        clearTimeout(timeout);
+        if (ws) { try { ws.close(); } catch(e){} }
+        ws = testWs;
+        // Send power on
+        sendKey('KEY_POWER');
+      };
+      testWs.onerror = () => clearTimeout(timeout);
+    }
+  }
+
+
+
+  
+
+
+  
+
+  let isPlaying = false;
+  function togglePlayPause() {
+    isPlaying = !isPlaying;
+    digiKey(isPlaying ? 'play' : 'pause');
+    const btn = document.getElementById('digi-playpause-btn');
+    if (btn) btn.innerHTML = isPlaying
+      ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2" stroke-linecap="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  }
+
+  // ─── DIGI DECODER ─────────────────────────────────────────
+  let currentDevice = localStorage.getItem('last_device') || 'samsung';
+  const BRIDGE = 'ws://' + (localStorage.getItem('bridge_ip') || '192.168.68.100') + ':8765';
+  let digiWs = null;
+
+  const DIGI_KEYS = {
+    up:19, down:20, left:21, right:22, ok:23, back:4, home:3,
+    menu:176, power:26, vol_up:24, vol_down:25, mute:164, del:67,
+    ch_up:166, ch_down:167, guide:172, play_pause:85, play:126, pause:127, stop:86,
+    rewind:89, fast_forward:90, exit:4,
+    prev:88, next:87, stop:86,
+    '0':7,'1':8,'2':9,'3':10,'4':11,'5':12,'6':13,'7':14,'8':15,'9':16
+  };
+
+  function switchDevice(device) {
+    currentDevice = device;
+    localStorage.setItem('last_device', device);
+    document.getElementById('tv-status-dot').style.display = device === 'samsung' ? 'flex' : 'none';
+    document.getElementById('digi-status-dot').style.display = device === 'digi' ? 'flex' : 'none';
+    document.getElementById('samsung-remote').style.display = device === 'samsung' ? 'flex' : 'none';
+    document.getElementById('digi-remote').style.display = device === 'digi' ? 'flex' : 'none';
+    document.getElementById('app-title').textContent = device === 'samsung' ? '📺 TV Remote' : '📡 DIGI Remote';
+    document.getElementById('apps-btn').style.display = device === 'digi' ? 'flex' : 'none';
+    const shadow = 'box-shadow:0 4px 0 #0a0a0a,inset 0 1px 0 rgba(255,255,255,0.08);';
+    document.getElementById('btn-samsung').style.cssText = device === 'samsung'
+      ? `padding:10px;border-radius:10px;border:2px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;${shadow}`
+      : `padding:10px;border-radius:10px;border:1px solid var(--border);background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);color:var(--text-dim);font-weight:700;font-size:13px;cursor:pointer;${shadow}`;
+    document.getElementById('btn-digi').style.cssText = device === 'digi'
+      ? `padding:10px;border-radius:10px;border:2px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;${shadow}`
+      : `padding:10px;border-radius:10px;border:1px solid var(--border);background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);color:var(--text-dim);font-weight:700;font-size:13px;cursor:pointer;${shadow}`;
+    if (device === 'digi' && (!digiWs || digiWs.readyState !== WebSocket.OPEN)) connectDigi();
+  }
+
+  function connectDigi() {
+    if (digiWs && digiWs.readyState === WebSocket.OPEN) return;
+    updateWifiIcon('digi-status-text', 'connecting');
+    const bridgeUrl = 'ws://' + (localStorage.getItem('bridge_ip') || '192.168.68.100') + ':8765';
+    digiWs = new WebSocket(bridgeUrl);
+    digiWs.onopen = () => setDigiStatus(true, 'Connected');
+    digiWs.onerror = () => setDigiStatus(false, 'Bridge offline');
+    digiWs.onclose = () => { 
+      setDigiStatus(false, 'Disconnected');
+      digiFailCount++;
+      if (digiFailCount >= 5) {
+        digiFailCount = 0;
+      }
+      setTimeout(connectDigi, 1000);
+    }
+    digiWs.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.reachable !== undefined && !connected) {
+          updateWifiIcon('status-text', data.reachable ? 'standby' : 'disconnected');
+        }
+      } catch(e) {}
+    };
+  }
+
+  function digiKey(key) {
+    if (!digiWs || digiWs.readyState !== WebSocket.OPEN) {
+      showToast('DIGI bridge not connected');
+      return;
+    }
+    const keycode = DIGI_KEYS[key];
+    if (keycode) digiWs.send(JSON.stringify({ action:'key', key, keycode }));
+  }
+
+  let lastSentText = '';
+  function digiTypeRealtime(val) {
+    if (!digiWs || digiWs.readyState !== WebSocket.OPEN) return;
+    // Send only the new character added
+    if (val.length > lastSentText.length) {
+      const newChar = val.slice(lastSentText.length);
+      digiWs.send(JSON.stringify({ action:'text', text: newChar }));
+    } else if (val.length < lastSentText.length) {
+      // Backspace pressed
+      const diff = lastSentText.length - val.length;
+      for (let i = 0; i < diff; i++) {
+        digiWs.send(JSON.stringify({ action:'key', key:'del', keycode:67 }));
+      }
+    }
+    lastSentText = val;
+  }
+
+  function clearDigiInput() {
+    const input = document.getElementById('digi-text-input');
+    input.value = '';
+    lastSentText = '';
+  }
+
+  function digiSendText() {
+    if (!digiWs || digiWs.readyState !== WebSocket.OPEN) {
+      showToast('DIGI bridge not connected');
+      return;
+    }
+    // First dismiss onscreen keyboard with Back, then send Enter
+    digiWs.send(JSON.stringify({ action:'key', key:'back', keycode:4 }));
+    setTimeout(() => {
+      digiWs.send(JSON.stringify({ action:'key', key:'ok', keycode:66 }));
+    }, 300);
+    document.getElementById('digi-text-input').value = '';
+    lastSentText = '';
+  }
+
+  // ─── TV MEDIA SKIP ────────────────────────────────────────
+  let tvSkipSeconds = 10;
+  let tvSkipTapCount = 0;
+  let tvSkipTapTimer = null;
+  let tvSkipResetTimer = null;
+  let tvMediaHoldTimer = null;
+  let tvMediaHoldInterval = null;
+
+  function updateTvSkipDisplay() {
+    const el = document.getElementById('tv-skip-display');
+    if (el) el.textContent = tvSkipSeconds > 0 ? '⏩ ' + tvSkipSeconds + 's' : '';
+  }
+
+  function sendTvSkip(dir) {
+    const key = dir === 'fwd' ? 'KEY_FF' : 'KEY_REWIND';
+    const presses = Math.max(1, Math.round(tvSkipSeconds / 5));
+    for (let i = 0; i < presses; i++) {
+      setTimeout(() => sendKey(key), i * 100);
+    }
+  }
+
+  function startTvMediaHold(dir) {
+    tvSkipTapCount++;
+    clearTimeout(tvSkipTapTimer);
+    tvSkipTapTimer = setTimeout(() => {
+      if (tvSkipTapCount >= 3) tvSkipSeconds = 30;
+      else if (tvSkipTapCount === 2) tvSkipSeconds = 20;
+      else tvSkipSeconds = 10;
+      updateTvSkipDisplay();
+      tvSkipTapCount = 0;
+      clearTimeout(tvSkipResetTimer);
+      tvSkipResetTimer = setTimeout(() => { tvSkipSeconds = 10; updateTvSkipDisplay(); }, 3000);
+    }, 300);
+    sendTvSkip(dir);
+    tvMediaHoldTimer = setTimeout(() => {
+      tvMediaHoldInterval = setInterval(() => sendTvSkip(dir), 500);
+    }, 600);
+  }
+
+  function stopTvMediaHold() {
+    clearTimeout(tvMediaHoldTimer);
+    clearInterval(tvMediaHoldInterval);
+    tvMediaHoldTimer = null;
+    tvMediaHoldInterval = null;
+  }
+
+  updateTvSkipDisplay();
+
+  // ─── MEDIA SKIP ───────────────────────────────────────────
+  let skipSeconds = 10;
+  let skipTapCount = 0;
+  let skipTapTimer = null;
+  let skipResetTimer = null;
+  let mediaHoldTimer = null;
+  let mediaHoldInterval = null;
+  const SKIP_LEVELS = [10, 20, 30];
+
+  function updateSkipDisplay() {
+    const el = document.getElementById('skip-display');
+    if (el) el.textContent = skipSeconds > 0 ? '⏩ ' + skipSeconds + 's' : '';
+  }
+
+  function sendSkip(dir) {
+    const presses = Math.max(1, Math.round(skipSeconds / 5));
+    const key = dir === 'fwd' ? 'fast_forward' : 'rewind';
+    for (let i = 0; i < presses; i++) {
+      setTimeout(() => digiKey(key), i * 100);
+    }
+  }
+
+  function startMediaHold(dir) {
+    // Count rapid taps to increase skip level
+    skipTapCount++;
+    clearTimeout(skipTapTimer);
+    skipTapTimer = setTimeout(() => {
+      // Taps settled — determine skip level
+      if (skipTapCount >= 3) skipSeconds = 30;
+      else if (skipTapCount === 2) skipSeconds = 20;
+      else skipSeconds = 10;
+      updateSkipDisplay();
+      skipTapCount = 0;
+
+      // Reset skip back to 10s after 3 seconds of inactivity
+      clearTimeout(skipResetTimer);
+      skipResetTimer = setTimeout(() => {
+        skipSeconds = 10;
+        updateSkipDisplay();
+      }, 3000);
+    }, 300);
+
+    sendSkip(dir);
+
+    // Hold to keep skipping
+    mediaHoldTimer = setTimeout(() => {
+      mediaHoldInterval = setInterval(() => sendSkip(dir), 500);
+    }, 600);
+  }
+
+  function stopMediaHold() {
+    clearTimeout(mediaHoldTimer);
+    clearInterval(mediaHoldInterval);
+    mediaHoldTimer = null;
+    mediaHoldInterval = null;
+  }
+
+  updateSkipDisplay();
+
+  // Send text on Enter key
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('digi-text-input');
+    if (input) input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); digiSendText(); }
+    });
+  });
+
+  function getApps() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) { showToast('Not connected'); return; }
+    ws.send(JSON.stringify({ method:'ms.channel.emit', params:{ event:'ed.installedApp.get', to:'host' }}));
+    ws.addEventListener('message', function handler(evt) {
+      try {
+        const msg = JSON.parse(evt.data);
+        if (msg.event === 'ed.installedApp.get') {
+          const apps = msg.data.data;
+          const list = apps.map(a => `${a.name}: ${a.appId}`).join('\n');
+          document.getElementById('apps-list').innerText = list;
+          ws.removeEventListener('message', handler);
+        }
+      } catch(e) {}
+    });
+  }
+
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  // Prevent back button from closing app
+  history.pushState(null, '', window.location.href);
+  window.addEventListener('popstate', () => {
+    history.pushState(null, '', window.location.href);
+  });
+
+  // ─── LONG PRESS REPEAT ────────────────────────────────────
+  let repeatTimer = null;
+  let repeatInterval = null;
+  let volLevel = parseInt(localStorage.getItem('vol_level') || '50');
+  let volSliderTimer = null;
+
+  function showVolSlider() {
+    const popup = document.getElementById('vol-slider-popup');
+    popup.style.display = 'flex';
+    document.getElementById('vol-slider').value = volLevel;
+    document.getElementById('vol-pct').textContent = volLevel + '%';
+    clearTimeout(volSliderTimer);
+    volSliderTimer = setTimeout(() => {
+      popup.style.display = 'none';
+    }, 3000);
+  }
+
+  function hideVolSlider() {
+    clearTimeout(volSliderTimer);
+    volSliderTimer = setTimeout(() => {
+      document.getElementById('vol-slider-popup').style.display = 'none';
+    }, 1500);
+  }
+
+  function onVolSlide(val) {
+    const newVol = parseInt(val);
+    const diff = newVol - volLevel;
+    const key = diff > 0 ? 'KEY_VOLUP' : 'KEY_VOLDOWN';
+    const steps = Math.abs(diff);
+    for (let i = 0; i < steps; i++) {
+      setTimeout(() => sendKey(key), i * 120);
+    }
+    volLevel = newVol;
+    localStorage.setItem('vol_level', volLevel);
+    document.getElementById('vol-pct').textContent = volLevel + '%';
+    updateVolDisplay();
+    clearTimeout(volSliderTimer);
+  }
+
+  function updateVolDisplay() {
+    const bar = '█'.repeat(volLevel) + '░'.repeat(Math.max(0, 20 - volLevel));
+    const pct = volLevel;
+    const el = document.getElementById('vol-display');
+    if (el) el.textContent = pct + '%';
+    if (volLevel === 0) {
+      const s1 = document.getElementById('mute-svg'); if(s1) s1.setAttribute('stroke','#ef5350');
+      muted = true;
+    } else {
+      const s2 = document.getElementById('mute-svg'); if(s2) s2.setAttribute('stroke','#f0f0f0');
+      muted = false;
+    }
+  }
+
+  function startRepeat(key, type, delta) {
+    if (type === 'digi') {
+      digiKey(key);
+      window._repeatFired = () => true;
+      window._repeatKey = null;
+      repeatTimer = setTimeout(() => {
+        repeatInterval = setInterval(() => digiKey(key), 300);
+      }, 500);
+      window._digiHoldKey = null;
+      return;
+    }
+    if (type === 'vol' && delta) {
+      // Vol: send immediately then repeat
+      sendKey(key);
+      volLevel = Math.min(30, Math.max(0, volLevel + delta));
+      localStorage.setItem('vol_level', volLevel);
+      updateVolDisplay();
+      repeatTimer = setTimeout(() => {
+        repeatInterval = setInterval(() => {
+          sendKey(key);
+          volLevel = Math.min(30, Math.max(0, volLevel + delta));
+          localStorage.setItem('vol_level', volLevel);
+          updateVolDisplay();
+        }, 300);
+      }, 700);
+    } else {
+      // Dpad/CH: send immediately then repeat on hold
+      sendKey(key);
+      let fired = true;
+      repeatTimer = setTimeout(() => {
+        repeatInterval = setInterval(() => {
+          sendKey(key);
+        }, 50);
+      }, 150);
+      window._repeatFired = () => fired;
+      window._repeatKey = null;
+    }
+  }
+
+  
+
+  function stopRepeat() {
+    clearTimeout(repeatTimer);
+    clearInterval(repeatInterval);
+    repeatTimer = null;
+    repeatInterval = null;
+    if (window._digiHoldKey) {
+      digiKey(window._digiHoldKey);
+      window._digiHoldKey = null;
+      return;
+    }
+    const shouldSend = window._repeatFired && !window._repeatFired() && window._repeatKey;
+    const keyToSend = window._repeatKey;
+    window._repeatFired = null;
+    window._repeatKey = null;
+    if (shouldSend) sendKey(keyToSend);
+  }
+
+  updateVolDisplay();
+
+  
+  function toggleMute() {
+    muted = !muted;
+    sendKey('KEY_MUTE');
+    const svg = document.getElementById('mute-svg');
+    if (svg) svg.setAttribute('stroke', muted ? '#ef5350' : '#f0f0f0');
+  }
+
+  
+  function updateSens(val) {
+    tpSens = parseFloat(val);
+    localStorage.setItem('tp_sens', tpSens);
+    document.getElementById('sens-val').textContent = tpSens + '×';
+  }
+
+  let cursorSize = parseInt(localStorage.getItem('cursor_size') || '3');
+  function updateCursor(val) {
+    cursorSize = parseInt(val);
+    localStorage.setItem('cursor_size', cursorSize);
+    document.getElementById('cursor-val').textContent = cursorSize;
+    // Send cursor size to TV via mouse move with size parameter
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ method:'ms.remote.control', params:{ Cmd:'Move', Position:{ x:0, y:0, Time:Date.now() }, TypeOfRemote:'ProcessMouseDevice' }}));
+    }
+  }
+
+  
+
+  
+  function showSettings() {
+    document.getElementById('settings-ip').textContent = TV_IP;
+    const savedIp = localStorage.getItem('bridge_ip') || '192.168.68.100';
+    document.getElementById('bridge-ip-input').value = savedIp;
+    document.getElementById('bridge-ip-display').textContent = savedIp + ':8765';
+    document.getElementById('settings-panel').style.display = 'flex';
+  }
+  function closeSettings() {
+    document.getElementById('settings-panel').style.display = 'none';
+  }
+  function updateBridgeIp() {
+    const ip = document.getElementById('bridge-ip-input').value.trim();
+    if (!ip) return;
+    const BRIDGE_URL = 'ws://' + ip + ':8765';
+    localStorage.setItem('bridge_ip', ip);
+    document.getElementById('bridge-ip-display').textContent = ip + ':8765';
+    if (digiWs) { try { digiWs.close(); } catch(e){} }
+    digiWs = new WebSocket(BRIDGE_URL);
+    digiWs.onopen = () => setStatus(true, 'DIGI Connected');
+    digiWs.onerror = () => setStatus(false, 'Bridge offline');
+    digiWs.onclose = () => setStatus(false, 'DIGI disconnected');
+    closeSettings();
+    showToast('Bridge IP updated');
+  }
+
+  function disconnect() {
+    manualDisconnect = true;
+    clearTimeout(reconnectTimer);
+    if (ws) { try { ws.close(); } catch(e){} ws = null; }
+    connected = false;
+    setStatus(false, 'Disconnected');
+    closeSettings();
+  }
+  function showSettings2() {
+    document.getElementById('overlay-title').textContent = 'Switch TV';
+    document.getElementById('overlay-desc').textContent = 'Enter new TV IP address.';
+    document.getElementById('disconnect-btn').style.display = 'none';
+    document.getElementById('overlay-cancel').style.display = 'block';
+    document.getElementById('overlay').style.display = 'flex';
+  }
+  function updateSens(val) {
+    tpSens = parseFloat(val);
+    localStorage.setItem('tp_sens', tpSens);
+    document.getElementById('sens-val').textContent = tpSens + '×';
+  }
+
+  // ─── TRACKPAD ─────────────────────────────────────────────
+  (function initTrackpad() {
+    const pad = document.getElementById('trackpad');
+    const kbInput = document.getElementById('kb-input');
+    const ripple = document.getElementById('ripple');
+
+    let lastX = null, lastY = null;
+    let isTap = false;
+    let tapTimer = null;
+    let moveThreshold = 6; // px — below this = tap, above = drag
+    let totalMove = 0;
+    const SENSITIVITY = 0.4; // lower = slower cursor movement
+
+    // Accumulated fractional movement
+    let accumX = 0, accumY = 0;
+
+    function sendMouseMove(dx, dy) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify({
+        method: 'ms.remote.control',
+        params: {
+          Cmd: 'Move',
+          Position: { x: Math.round(dx), y: Math.round(dy), Time: Date.now() },
+          TypeOfRemote: 'ProcessMouseDevice'
+        }
+      }));
+    }
+
+    function sendMouseClick() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify({
+        method: 'ms.remote.control',
+        params: {
+          Cmd: 'LeftClick',
+          Position: { x: 0, y: 0, Time: Date.now() },
+          TypeOfRemote: 'ProcessMouseDevice'
+        }
+      }));
+      // ripple feedback
+      ripple.classList.add('show');
+      setTimeout(() => ripple.classList.remove('show'), 300);
+    }
+
+    pad.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const t = e.touches[0];
+      lastX = t.clientX;
+      lastY = t.clientY;
+      totalMove = 0;
+      isTap = true;
+      accumX = 0; accumY = 0;
+    }, { passive: false });
+
+    pad.addEventListener('touchmove', e => {
+      e.preventDefault();
+      const t = e.touches[0];
+      const dx = (t.clientX - lastX) * SENSITIVITY;
+      const dy = (t.clientY - lastY) * SENSITIVITY;
+      totalMove += Math.abs(t.clientX - lastX) + Math.abs(t.clientY - lastY);
+      if (totalMove > moveThreshold) isTap = false;
+
+      accumX += dx;
+      accumY += dy;
+
+      // Only send when we have at least 1px of integer movement
+      const ix = Math.trunc(accumX);
+      const iy = Math.trunc(accumY);
+      if (ix !== 0 || iy !== 0) {
+        sendMouseMove(ix, iy);
+        accumX -= ix;
+        accumY -= iy;
+      }
+
+      lastX = t.clientX;
+      lastY = t.clientY;
+    }, { passive: false });
+
+    pad.addEventListener('touchend', e => {
+      e.preventDefault();
+      if (isTap) sendMouseClick();
+      lastX = null; lastY = null;
+    }, { passive: false });
+
+    // Also handle mouse (for laptop testing)
+    let mouseDown = false;
+    pad.addEventListener('mousedown', e => {
+      mouseDown = true;
+      lastX = e.clientX; lastY = e.clientY;
+      totalMove = 0; isTap = true;
+      accumX = 0; accumY = 0;
+    });
+    pad.addEventListener('mousemove', e => {
+      if (!mouseDown) return;
+      const dx = (e.clientX - lastX) * SENSITIVITY;
+      const dy = (e.clientY - lastY) * SENSITIVITY;
+      totalMove += Math.abs(e.clientX - lastX) + Math.abs(e.clientY - lastY);
+      if (totalMove > moveThreshold) isTap = false;
+      accumX += dx; accumY += dy;
+      const ix = Math.trunc(accumX), iy = Math.trunc(accumY);
+      if (ix !== 0 || iy !== 0) { sendMouseMove(ix, iy); accumX -= ix; accumY -= iy; }
+      lastX = e.clientX; lastY = e.clientY;
+    });
+    pad.addEventListener('mouseup', () => {
+      if (isTap) sendMouseClick();
+      mouseDown = false;
+    });
+
+    // ── KEYBOARD: focus hidden input to open phone keyboard ──
+    // When TV opens a text field, user taps trackpad area to focus
+    // hidden input — phone keyboard pops up — keystrokes stream to TV
+    kbInput.addEventListener('input', async e => {
+      const val = kbInput.value;
+      if (!val) return;
+      kbInput.value = ''; // clear immediately
+
+      for (const char of val) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) break;
+        ws.send(JSON.stringify({
+          method: 'ms.channel.emit',
+          params: {
+            event: 'ed.sendText',
+            to: 'host',
+            data: { text: char, action_type: 'WRITE' }
+          }
+        }));
+        await sleep(50);
+      }
+    });
+
+    kbInput.addEventListener('keydown', e => {
+      if (e.key === 'Backspace') { e.preventDefault(); sendKey('KEY_DEL'); }
+      if (e.key === 'Enter')     { e.preventDefault(); sendKey('KEY_ENTER'); }
+    });
+
+    // Tap anywhere on trackpad section focuses the hidden input
+    // so phone keyboard is always ready
+    pad.addEventListener('click', () => kbInput.focus());
+  })();
+
+  // ─── TOAST ────────────────────────────────────────────────
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ─── INIT ─────────────────────────────────────────────────
+  window.onload = () => {
+    const savedIp = localStorage.getItem('tv_ip');
+    if (savedIp) {
+      TV_IP = savedIp;
+      document.getElementById('ip-input').value = savedIp;
+      document.getElementById('overlay').style.display = 'none';
+      if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+        connect();
+      }
+    } else {
+      document.getElementById('overlay').style.display = 'flex';
+    }
+    switchDevice(currentDevice);
+
+    
+  };
+
+  // ─── TRACKPAD ─────────────────────────────────────────────
+  let manualDisconnect = false;
+  let tvState = 'offline'; // 'connected' | 'standby' | 'offline' | 'connecting'
+  let digiFailCount = 0;
+  let trackpadActive = false;
+  let tpSens = parseFloat(localStorage.getItem('tp_sens') || '1.5');
+
+  function toggleTrackpad() {
+    trackpadActive = !trackpadActive;
+    const pad = document.getElementById('trackpad');
+    const padSection = document.getElementById('trackpad-section');
+    const btn = document.getElementById('tp-toggle-btn');
+    const icon = document.getElementById('tp-toggle-icon');
+    if (padSection) padSection.style.display = trackpadActive ? 'block' : 'none';
+    if (trackpadActive) {
+      pad.style.borderColor = 'var(--accent)';
+      btn.style.background = 'var(--accent)';
+      btn.style.color = '#000';
+      icon.textContent = '🖱';
+      // activate mouse mode on TV — send multiple moves to force cursor to appear
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const wake = [1,2,3,2,1,0,-1,-2,-1,0];
+        wake.forEach((v, i) => {
+          setTimeout(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ method:'ms.remote.control', params:{ Cmd:'Move', Position:{ x:v, y:v, Time:Date.now() }, TypeOfRemote:'ProcessMouseDevice' }}));
+            }
+          }, i * 50);
+        });
+      }
+      showToast('Mouse ON — slide to move, tap to click');
+    } else {
+      pad.style.borderColor = '';
+      btn.style.background = '';
+      btn.style.color = '';
+      icon.textContent = '🖱';
+      showToast('Mouse OFF');
+    }
+  }
+
+  (function() {
+    const pad    = document.getElementById('trackpad');
+    const ripple = document.getElementById('tp-ripple');
+    const hint   = document.getElementById('tp-hint');
+    let lx = null, ly = null, totalMove = 0, isTap = false;
+    let ax = 0, ay = 0;
+
+    function move(dx, dy) {
+      if (!trackpadActive || !ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify({ method:'ms.remote.control', params:{ Cmd:'Move', Position:{ x:Math.round(dx), y:Math.round(dy), Time:Date.now() }, TypeOfRemote:'ProcessMouseDevice' }}));
+    }
+    function click() {
+      if (!trackpadActive || !ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify({ method:'ms.remote.control', params:{ Cmd:'LeftClick', Position:{ x:0, y:0, Time:Date.now() }, TypeOfRemote:'ProcessMouseDevice' }}));
+      ripple.style.opacity='0.3'; ripple.style.transform='scale(1)';
+      setTimeout(()=>{ ripple.style.opacity='0'; ripple.style.transform='scale(0)'; }, 280);
+    }
+
+    pad.addEventListener('touchstart', e=>{ e.preventDefault(); if(!trackpadActive) return; const t=e.touches[0]; lx=t.clientX; ly=t.clientY; totalMove=0; isTap=true; ax=0; ay=0; hint.style.display='none'; },{passive:false});
+    pad.addEventListener('touchmove',  e=>{ e.preventDefault(); if(!trackpadActive||lx===null) return; const t=e.touches[0]; const dx=(t.clientX-lx)*tpSens, dy=(t.clientY-ly)*tpSens; totalMove+=Math.abs(t.clientX-lx)+Math.abs(t.clientY-ly); if(totalMove>6) isTap=false; ax+=dx; ay+=dy; const ix=Math.trunc(ax),iy=Math.trunc(ay); if(ix||iy){move(ix,iy);ax-=ix;ay-=iy;} lx=t.clientX; ly=t.clientY; },{passive:false});
+    pad.addEventListener('touchend',   e=>{ e.preventDefault(); if(!trackpadActive) return; if(isTap) click(); lx=null; ly=null; },{passive:false});
+
+    let md=false;
+    pad.addEventListener('mousedown', e=>{ if(!trackpadActive) return; md=true; lx=e.clientX; ly=e.clientY; totalMove=0; isTap=true; ax=0; ay=0; hint.style.display='none'; });
+    window.addEventListener('mousemove', e=>{ if(!md||!trackpadActive) return; const dx=(e.clientX-lx)*tpSens, dy=(e.clientY-ly)*tpSens; totalMove+=Math.abs(e.clientX-lx)+Math.abs(e.clientY-ly); if(totalMove>6) isTap=false; ax+=dx; ay+=dy; const ix=Math.trunc(ax),iy=Math.trunc(ay); if(ix||iy){move(ix,iy);ax-=ix;ay-=iy;} lx=e.clientX; ly=e.clientY; });
+    window.addEventListener('mouseup', ()=>{ if(md&&isTap&&trackpadActive) click(); md=false; lx=null; });
+  })();
+
+  // ─── ICON + FAVICON + MANIFEST ────────────────────────────
+  // Draw icon on canvas so we get a real PNG (works for favicon + apple-touch-icon)
+  function makeIconDataUrl(size) {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    // Background rounded rect
+    const r = size * 0.22;
+    ctx.beginPath();
+    ctx.moveTo(r, 0); ctx.lineTo(size-r, 0);
+    ctx.quadraticCurveTo(size, 0, size, r);
+    ctx.lineTo(size, size-r);
+    ctx.quadraticCurveTo(size, size, size-r, size);
+    ctx.lineTo(r, size); ctx.quadraticCurveTo(0, size, 0, size-r);
+    ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fill();
+    // TV screen shape
+    const pad = size * 0.12;
+    const sw = size - pad*2, sh = sw * 0.62;
+    const sx = pad, sy = size * 0.18;
+    const sr = size * 0.06;
+    ctx.beginPath();
+    ctx.moveTo(sx+sr, sy); ctx.lineTo(sx+sw-sr, sy);
+    ctx.quadraticCurveTo(sx+sw, sy, sx+sw, sy+sr);
+    ctx.lineTo(sx+sw, sy+sh-sr);
+    ctx.quadraticCurveTo(sx+sw, sy+sh, sx+sw-sr, sy+sh);
+    ctx.lineTo(sx+sr, sy+sh); ctx.quadraticCurveTo(sx, sy+sh, sx, sy+sh-sr);
+    ctx.lineTo(sx, sy+sr); ctx.quadraticCurveTo(sx, sy, sx+sr, sy);
+    ctx.closePath();
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fill();
+    ctx.strokeStyle = '#4fc3f7';
+    ctx.lineWidth = size * 0.03;
+    ctx.stroke();
+    // Screen glow dot
+    ctx.beginPath();
+    ctx.arc(sx+sw*0.5, sy+sh*0.5, size*0.08, 0, Math.PI*2);
+    ctx.fillStyle = '#4fc3f7';
+    ctx.fill();
+    // Stand
+    const standW = sw * 0.28, standH = size * 0.08;
+    const standX = sx + (sw - standW)/2, standY = sy + sh;
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(standX, standY, standW, standH);
+    ctx.fillRect(standX - standW*0.3, standY + standH - size*0.025, standW*1.6, size*0.025);
+    return c.toDataURL('image/png');
+  }
+
+  const icon192 = makeIconDataUrl(192);
+  const icon512 = makeIconDataUrl(512);
+  const icon32  = makeIconDataUrl(32);
+
+  // Favicon
+  document.getElementById('favicon-link').href = icon32;
+
+  // Apple touch icon (used when saved to iOS home screen)
+  document.getElementById('apple-icon-link').href = icon192;
+
+  // PWA Manifest
+  const manifest = {
+    name: 'TV Remote',
+    short_name: 'TV Remote',
+    description: 'Samsung TV Remote Control',
+    start_url: '.',
+    display: 'standalone',
+    background_color: '#0a0a0a',
+    theme_color: '#0a0a0a',
+    orientation: 'portrait',
+    icons: [
+      { src: icon192, sizes: '192x192', type: 'image/png' },
+      { src: icon512, sizes: '512x512', type: 'image/png' }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+  document.getElementById('manifest-link').href = URL.createObjectURL(blob);
+</script>
+
+</body>
+</html>
