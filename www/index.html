@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0a0a">
 <title>TV Remote</title>
-<link rel="manifest" href="#" id="manifest-link">
+<link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" id="favicon-link">
 <link rel="apple-touch-icon" id="apple-icon-link">
 <style>
@@ -460,7 +460,7 @@
   <h2>TV Remote</h2>
   <p>Enter your Samsung TV IP address to connect.<br>Your TV must be on the same WiFi.</p>
   <label class="overlay-label">TV IP Address</label>
-  <input class="overlay-input" id="ip-input" type="text" value="192.168.68.106" placeholder="192.168.68.106" inputmode="decimal">
+  <input class="overlay-input" id="ip-input" type="text" placeholder="e.g. 192.168.68.106" inputmode="decimal">
   <button class="overlay-btn" onclick="startConnect()">Connect to TV</button>
 </div>
 
@@ -476,18 +476,19 @@
     </div>
     <div style="border-top:1px solid var(--border);padding-top:12px;">
       <div style="font-size:11px;color:var(--text-dim);font-weight:700;letter-spacing:1px;margin-bottom:8px;">CONNECTION</div>
-      <a id="cert-link" href="https://192.168.68.106:8002" target="_blank" style="display:block;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--accent);font-size:11px;font-weight:700;padding:8px;text-align:center;margin-bottom:8px;text-decoration:none;">🔐 Trust Certificate (tap if not connecting)</a>
+
       <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">TV IP: <span id="settings-ip" style="color:var(--accent);"></span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <button onclick="closeSettings();document.getElementById('overlay').style.display='flex';" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-size:12px;font-weight:700;padding:10px;cursor:pointer;">Switch TV</button>
-        <button onclick="disconnect();closeSettings();" style="background:transparent;border:1px solid var(--red);border-radius:8px;color:var(--red);font-size:12px;font-weight:700;padding:10px;cursor:pointer;">Disconnect</button>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input id="tv-ip-input" type="text" placeholder="192.168.68.x" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px;outline:none;">
+        <button onclick="updateTvIp()" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;">Save</button>
       </div>
+
     </div>
     <div style="border-top:1px solid var(--border);padding-top:12px;">
         <div style="font-size:11px;color:var(--text-dim);font-weight:700;letter-spacing:1px;margin-bottom:8px;">DIGI BRIDGE</div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Bridge IP: <span id="bridge-ip-display" style="color:var(--accent);">192.168.68.100:8765</span></div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Bridge IP: <span id="bridge-ip-display" style="color:var(--accent);"></span></div>
         <div style="display:flex;gap:8px;">
-          <input id="bridge-ip-input" type="text" value="192.168.68.100" placeholder="192.168.68.100" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px;outline:none;">
+          <input id="bridge-ip-input" type="text" placeholder="192.168.68.x" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px;outline:none;">
           <button onclick="updateBridgeIp()" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;">Save</button>
         </div>
       </div>
@@ -503,6 +504,7 @@
     <button id="apps-btn" onclick="showAppsLauncher()" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:16px;width:32px;height:32px;cursor:pointer;align-items:center;justify-content:center;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     </button>
+    <button id="update-btn" onclick="downloadUpdate()" style="display:none;background:#4fc3f7;border:none;border-radius:8px;color:#000;font-size:11px;font-weight:700;padding:4px 8px;cursor:pointer;align-items:center;gap:4px;">↑ Update</button>
     <button onclick="showSettings()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:16px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;">⚙</button>
   </div>
 </div>
@@ -821,7 +823,7 @@
 
 <script>
   // ─── CONFIG ───────────────────────────────────────────────
-  let TV_IP = '192.168.68.106';
+  let TV_IP = localStorage.getItem('tv_ip') || '';
   let ws = null;
   let token = localStorage.getItem('samsung_tv_token') || '';
   let connected = false;
@@ -836,6 +838,7 @@
     TV_IP = input;
     localStorage.setItem('tv_ip', TV_IP);
     document.getElementById('overlay').style.display = 'none';
+
     connect();
   }
 
@@ -912,7 +915,7 @@
     }
   }
 
-  function updateWifiIcon(iconId, state) {return;
+  function updateWifiIcon(iconId, state) {
     // state: 'connected' | 'disconnected' | 'connecting' | 'standby'
     const el = document.getElementById(iconId);
     if (!el) return;
@@ -928,21 +931,21 @@
 
   function setTVStatus(state) {
     if (state === 'connected') {
-      updateWifiIcon('status-text', 'connected');
+      updateWifiIcon('tv-status-dot', 'connected');
     } else if (state === 'standby') {
-      updateWifiIcon('status-text', 'standby');
+      updateWifiIcon('tv-status-dot', 'standby');
     } else if (state === 'connecting') {
-      updateWifiIcon('status-text', 'connecting');
+      updateWifiIcon('tv-status-dot', 'connecting');
     } else {
-      updateWifiIcon('status-text', 'disconnected');
+      updateWifiIcon('tv-status-dot', 'disconnected');
     }
   }
 
   function setStatus(ok, text) {
-    updateWifiIcon('status-text', ok ? 'connected' : text.includes('onnect') && !ok ? 'connecting' : 'disconnected');
+    updateWifiIcon('tv-status-dot', ok ? 'connected' : text.includes('onnect') && !ok ? 'connecting' : 'disconnected');
   }
   function setDigiStatus(ok, text) {
-    updateWifiIcon('digi-status-text', ok ? 'connected' : text.includes('onnect') && !ok ? 'connecting' : 'disconnected');
+    updateWifiIcon('digi-status-dot', ok ? 'connected' : text.includes('onnect') && !ok ? 'connecting' : 'disconnected');
   }
 
   // ─── SEND KEY ─────────────────────────────────────────────
@@ -983,6 +986,45 @@
   }
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ─── UPDATE CHECKER ───────────────────────────────────────
+  const CURRENT_VERSION = '1.08.2355';
+  let latestApkUrl = '';
+
+  async function checkForUpdates() {
+    try {
+      const res = await fetch('https://api.github.com/repos/JohnnyDeey/tv-remote-app/releases/latest');
+      const data = await res.json();
+      const latest = data.tag_name?.replace('v', '') || '0';
+      if (latest !== CURRENT_VERSION) {
+        latestApkUrl = data.assets?.find(a => a.name.endsWith('.apk'))?.browser_download_url || data.html_url;
+        const btn = document.getElementById('update-btn');
+        if (btn) { btn.style.display = 'flex'; }
+      }
+    } catch(e) {}
+  }
+
+  async function downloadUpdate() {
+    if (!latestApkUrl) return;
+    showToast('⬇️ Downloading update...');
+    try {
+      const response = await fetch(latestApkUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'tv-remote-update.apk';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('✅ Download complete — tap to install');
+    } catch(e) {
+      // Fallback to browser
+      window.open(latestApkUrl, '_blank');
+    }
+  }
+
+  setTimeout(checkForUpdates, 5000);
+  setInterval(checkForUpdates, 30 * 60 * 1000);
 
   // ─── APP LAUNCHER ─────────────────────────────────────────
   const APP_NAMES = {
@@ -1170,9 +1212,14 @@
   });
 
     function tvPower() {
-    if (connected) {
+    if (ws && ws.readyState === WebSocket.OPEN && connected) {
       // TV is on — power off and immediately kill the zombie socket
       sendKey('KEY_POWER');
+    } else if (ws && ws.readyState === WebSocket.OPEN && !connected) {
+      // WS open but not confirmed yet — wait briefly then retry
+
+      setTimeout(() => tvPower(), 1500);
+      return;
       setTimeout(() => {
         manualDisconnect = true; // Stop auto-reconnect
         if (ws) { try { ws.close(); } catch(e){} ws = null; }
@@ -1180,7 +1227,7 @@
       }, 1000);
     } else {
       // TV is off — fresh connection attempt with timeout
-      showToast('🔌 Waking TV...');
+     
       manualDisconnect = false;
       
       // Try fresh connection
@@ -1230,7 +1277,7 @@
 
   // ─── DIGI DECODER ─────────────────────────────────────────
   let currentDevice = localStorage.getItem('last_device') || 'samsung';
-  const BRIDGE = 'ws://' + (localStorage.getItem('bridge_ip') || '192.168.68.100') + ':8765';
+  const BRIDGE = 'ws://' + (localStorage.getItem('bridge_ip') || '') + ':8765';
   let digiWs = null;
 
   const DIGI_KEYS = {
@@ -1261,14 +1308,20 @@
     if (device === 'digi' && (!digiWs || digiWs.readyState !== WebSocket.OPEN)) connectDigi();
   }
 
-  function connectDigi() {
+      function connectDigi() {
     if (digiWs && digiWs.readyState === WebSocket.OPEN) return;
-    updateWifiIcon('digi-status-text', 'connecting');
-    const bridgeUrl = 'ws://' + (localStorage.getItem('bridge_ip') || '192.168.68.100') + ':8765';
+    const savedBridge = localStorage.getItem('bridge_ip');
+    if (!savedBridge) {
+      updateWifiIcon('digi-status-dot', 'disconnected');
+      showToast('Set DIGI Bridge IP in Settings');
+      return;
+    }
+    updateWifiIcon('digi-status-dot', 'connecting');
+    const bridgeUrl = 'ws://' + savedBridge + ':8765';
     digiWs = new WebSocket(bridgeUrl);
     digiWs.onopen = () => setDigiStatus(true, 'Connected');
     digiWs.onerror = () => setDigiStatus(false, 'Bridge offline');
-    digiWs.onclose = () => { 
+    digiWs.onclose = () => {
       setDigiStatus(false, 'Disconnected');
       digiFailCount++;
       if (digiFailCount >= 5) {
@@ -1280,7 +1333,10 @@
       try {
         const data = JSON.parse(e.data);
         if (data.reachable !== undefined && !connected) {
-          updateWifiIcon('status-text', data.reachable ? 'standby' : 'disconnected');
+          updateWifiIcon('tv-status-dot', data.reachable ? 'standby' : 'disconnected');
+        }
+        if (data.status === 'error') {
+          showToast('DIGI error: ' + (data.msg || 'unknown'));
         }
       } catch(e) {}
     };
@@ -1613,11 +1669,29 @@
   
 
   
+
+
+  function updateTvIp() {
+    const ip = document.getElementById('tv-ip-input').value.trim();
+    if (!ip) return;
+    TV_IP = ip;
+    localStorage.setItem('tv_ip', ip);
+    document.getElementById('settings-ip').textContent = ip;
+
+    manualDisconnect = false;
+    if (ws) { try { ws.close(); } catch(e){} ws = null; }
+    connected = false;
+    connect();
+    showToast('TV IP updated');
+  }
+
   function showSettings() {
-    document.getElementById('settings-ip').textContent = TV_IP;
-    const savedIp = localStorage.getItem('bridge_ip') || '192.168.68.100';
+    document.getElementById('settings-ip').textContent = TV_IP || '(not set)';
+    document.getElementById('tv-ip-input').value = TV_IP;
+
+    const savedIp = localStorage.getItem('bridge_ip') || '';
     document.getElementById('bridge-ip-input').value = savedIp;
-    document.getElementById('bridge-ip-display').textContent = savedIp + ':8765';
+    document.getElementById('bridge-ip-display').textContent = savedIp ? savedIp + ':8765' : '(not set)';
     document.getElementById('settings-panel').style.display = 'flex';
   }
   function closeSettings() {
@@ -1626,14 +1700,10 @@
   function updateBridgeIp() {
     const ip = document.getElementById('bridge-ip-input').value.trim();
     if (!ip) return;
-    const BRIDGE_URL = 'ws://' + ip + ':8765';
     localStorage.setItem('bridge_ip', ip);
     document.getElementById('bridge-ip-display').textContent = ip + ':8765';
-    if (digiWs) { try { digiWs.close(); } catch(e){} }
-    digiWs = new WebSocket(BRIDGE_URL);
-    digiWs.onopen = () => setStatus(true, 'DIGI Connected');
-    digiWs.onerror = () => setStatus(false, 'Bridge offline');
-    digiWs.onclose = () => setStatus(false, 'DIGI disconnected');
+    if (digiWs) { try { digiWs.close(); } catch(e){} digiWs = null; }
+    connectDigi();
     closeSettings();
     showToast('Bridge IP updated');
   }
@@ -1809,22 +1879,124 @@
   }
 
   // ─── INIT ─────────────────────────────────────────────────
-  window.onload = () => {
-    const savedIp = localStorage.getItem('tv_ip');
-    if (savedIp) {
-      TV_IP = savedIp;
-      document.getElementById('ip-input').value = savedIp;
+    window.onload = () => {
+    const savedTvIp = localStorage.getItem('tv_ip');
+    const savedBridgeIp = localStorage.getItem('bridge_ip');
+    
+    if (!savedTvIp || !savedBridgeIp) {
+      // First time — show setup wizard
+      showSetupWizard();
+    } else {
+      TV_IP = savedTvIp;
+      document.getElementById('ip-input').value = savedTvIp;
       document.getElementById('overlay').style.display = 'none';
       if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
         connect();
       }
-    } else {
-      document.getElementById('overlay').style.display = 'flex';
+      connectDigi();
     }
-    switchDevice(currentDevice);
 
-    
+    switchDevice(currentDevice);
   };
+
+  function showSetupWizard() {
+    const wizard = document.createElement('div');
+    wizard.id = 'setup-wizard';
+    wizard.style.cssText = 'position:fixed;inset:0;background:#0a0a0a;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;';
+    
+    const slides = [
+      {
+        icon: '📺',
+        title: 'Welcome to TV Remote',
+        desc: 'Control your Samsung TV and DIGI decoder from your phone. Let\'s set it up in 2 steps.',
+        input: null,
+        hint: null
+      },
+      {
+        icon: '📡',
+        title: 'Samsung TV IP Address',
+        desc: 'Find your TV IP address:',
+        hint: 'On TV: Settings → General → Network → Network Status → IP Address',
+        input: { id: 'wizard-tv-ip', placeholder: '192.168.68.106', label: 'TV IP Address' }
+      },
+      {
+        icon: '🎮',
+        title: 'DIGI Decoder IP Address',
+        desc: 'Find your decoder IP address:',
+        hint: 'On Decoder: Settings → Network → IP Address',
+        input: { id: 'wizard-bridge-ip', placeholder: '192.168.68.107', label: 'Decoder IP Address' }
+      },
+      {
+        icon: '✅',
+        title: 'All Set!',
+        desc: 'Your remote is ready. If buttons stop working after a power cut, update the IPs in Settings (⚙).',
+        input: null,
+        hint: null
+      }
+    ];
+    
+    let current = 0;
+    
+    function renderSlide() {
+      const s = slides[current];
+      wizard.innerHTML = `
+        <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:20px;">
+          <div style="text-align:center;font-size:56px;">${s.icon}</div>
+          <div style="text-align:center;color:#f0f0f0;font-size:20px;font-weight:700;">${s.title}</div>
+          <div style="text-align:center;color:#888;font-size:14px;">${s.desc}</div>
+          ${s.hint ? `<div style="background:#1e1e1e;border:1px solid #333;border-radius:10px;padding:12px;color:#4fc3f7;font-size:12px;">💡 ${s.hint}</div>` : ''}
+          ${s.input ? `
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <label style="color:#888;font-size:12px;">${s.input.label}</label>
+              <input id="${s.input.id}" type="text" placeholder="${s.input.placeholder}" inputmode="decimal"
+                style="background:#1e1e1e;border:1px solid #4fc3f7;border-radius:8px;padding:12px;color:#f0f0f0;font-size:16px;outline:none;text-align:center;">
+            </div>` : ''}
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            ${current > 0 ? `<button onclick="wizardPrev()" style="flex:1;padding:14px;background:#2a2a2a;border:1px solid #333;border-radius:10px;color:#888;font-size:14px;cursor:pointer;">← Back</button>` : ''}
+            <button onclick="wizardNext()" style="flex:2;padding:14px;background:#4fc3f7;border:none;border-radius:10px;color:#000;font-size:15px;font-weight:700;cursor:pointer;">
+              ${current === slides.length - 1 ? 'Start Using App →' : 'Next →'}
+            </button>
+          </div>
+          <div style="display:flex;justify-content:center;gap:6px;">
+            ${slides.map((_, i) => `<div style="width:8px;height:8px;border-radius:50%;background:${i===current?'#4fc3f7':'#333'};"></div>`).join('')}
+          </div>
+        </div>`;
+    }
+    
+    window.wizardNext = function() {
+      // Save inputs
+      if (current === 1) {
+        const ip = document.getElementById('wizard-tv-ip')?.value.trim();
+        if (!ip) { showToast('Enter TV IP address'); return; }
+        TV_IP = ip;
+        localStorage.setItem('tv_ip', ip);
+        document.getElementById('ip-input').value = ip;
+      }
+      if (current === 2) {
+        const ip = document.getElementById('wizard-bridge-ip')?.value.trim();
+        if (!ip) { showToast('Enter Decoder IP address'); return; }
+        localStorage.setItem('bridge_ip', ip);
+      }
+      if (current === slides.length - 1) {
+        // Done
+        document.getElementById('setup-wizard').remove();
+        document.getElementById('overlay').style.display = 'none';
+        connect();
+        connectDigi();
+        return;
+      }
+      current++;
+      renderSlide();
+    };
+    
+    window.wizardPrev = function() {
+      current--;
+      renderSlide();
+    };
+    
+    renderSlide();
+    document.body.appendChild(wizard);
+  }
 
   // ─── TRACKPAD ─────────────────────────────────────────────
   let manualDisconnect = false;
@@ -1944,9 +2116,9 @@
     return c.toDataURL('image/png');
   }
 
-  const icon192 = makeIconDataUrl(192);
-  const icon512 = makeIconDataUrl(512);
-  const icon32  = makeIconDataUrl(32);
+  const icon192 = 'icon.png';
+  const icon512 = 'icon.png';
+  const icon32  = 'icon.png';
 
   // Favicon
   document.getElementById('favicon-link').href = icon32;
@@ -1969,9 +2141,7 @@
       { src: icon512, sizes: '512x512', type: 'image/png' }
     ]
   };
-  const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-  document.getElementById('manifest-link').href = URL.createObjectURL(blob);
-</script>
 
+</script>
 </body>
 </html>
