@@ -1,0 +1,2 @@
+$v = (Select-String -Path 'www\index.html' -Pattern 'const CURRENT_VERSION').Line -replace ".*'(.+)'.*",'$1'
+[System.IO.File]::WriteAllText("$PSScriptRoot\version.tmp", $v, [System.Text.Encoding]::ASCII)

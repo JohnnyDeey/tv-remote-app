@@ -15,6 +15,7 @@ public class MainActivity extends BridgeActivity {
         WebView webView = getBridge().getWebView();
         WebSettings settings = webView.getSettings();
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         webView.setWebViewClient(new BridgeWebViewClient(getBridge()) {
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {

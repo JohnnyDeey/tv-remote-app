@@ -478,9 +478,11 @@
       <div style="font-size:11px;color:var(--text-dim);font-weight:700;letter-spacing:1px;margin-bottom:8px;">CONNECTION</div>
 
       <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">TV IP: <span id="settings-ip" style="color:var(--accent);"></span></div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Device Name: <span id="device-name-display" style="color:var(--accent);"></span></div>
+
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input id="tv-ip-input" type="text" placeholder="192.168.68.x" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px;outline:none;">
-        <button onclick="updateTvIp()" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;">Save</button>
+        <button onclick="updateTvIp()" style="background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#f0f0f0;font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;box-shadow:0 4px 0 #0a0a0a;">Save</button>
       </div>
 
     </div>
@@ -489,7 +491,11 @@
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Bridge IP: <span id="bridge-ip-display" style="color:var(--accent);"></span></div>
         <div style="display:flex;gap:8px;">
           <input id="bridge-ip-input" type="text" placeholder="192.168.68.x" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px;outline:none;">
-          <button onclick="updateBridgeIp()" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;">Save</button>
+          <button onclick="updateBridgeIp()" style="background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#f0f0f0;font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;box-shadow:0 4px 0 #0a0a0a;">Save</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <span style="font-size:11px;color:#555;">Version: <span id="app-version-display" style="color:#4fc3f7;"></span></span>
+          <button onclick="checkAndUpdate()" style="background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#f0f0f0;font-size:11px;font-weight:700;cursor:pointer;padding:4px 10px;box-shadow:0 4px 0 #0a0a0a;">Check Updates</button>
         </div>
       </div>
   </div>
@@ -498,13 +504,31 @@
 <!-- REMOTE UI -->
 <div class="status-bar">
   <h1 id="app-title">📺 TV Remote</h1>
+  <div style="display:flex;align-items:center;gap:6px;margin-left:8px;">
+    <div style="display:flex;align-items:center;gap:3px;">
+      <div id="dot-tv" style="width:8px;height:8px;border-radius:50%;background:#ef5350;transition:background 0.5s;"></div>
+      <span style="font-size:10px;color:#888;">TV</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;">
+      <div id="dot-digi" style="width:8px;height:8px;border-radius:50%;background:#ef5350;transition:background 0.5s;"></div>
+      <span style="font-size:10px;color:#888;">DIGI</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;">
+      <div id="dot-bridge" style="width:8px;height:8px;border-radius:50%;background:#ef5350;transition:background 0.5s;"></div>
+      <span style="font-size:10px;color:#888;">Bridge</span>
+    </div>
+  </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <div class="status-dot" id="tv-status-dot" style="display:flex;"></div>
+        <div id="tv-status-dot" style="display:flex;"></div>
+    <div id="digi-status-dot" style="display:none;"></div>
     <div class="status-dot" id="digi-status-dot" style="display:none;"></div>
     <button id="apps-btn" onclick="showAppsLauncher()" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:16px;width:32px;height:32px;cursor:pointer;align-items:center;justify-content:center;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     </button>
-    <button id="update-btn" onclick="downloadUpdate()" style="display:none;background:#4fc3f7;border:none;border-radius:8px;color:#000;font-size:11px;font-weight:700;padding:4px 8px;cursor:pointer;align-items:center;gap:4px;">↑ Update</button>
+
+
+    <button id="update-btn" onclick="downloadUpdate()" style="display:none;background:#4fc3f7;border:none;border-radius:8px;color:#000;font-size:11px;font-weight:700;padding:4px 8px;cursor:pointer;align-items:center;">Update</button>
     <button onclick="showSettings()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:16px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;">⚙</button>
   </div>
 </div>
@@ -533,15 +557,10 @@
       </button>
       <button class="btn" onclick="sendKey('KEY_MENU')">
         <span class="icon">⚙️</span>
-      </button>
+            </button>
     </div>
   </div>
-
-  
-
-  
-
-  <!-- D-PAD + VOL/CH -->
+  <!-- TRACKPAD -->
   <div class="section">
     <div class="dpad-section">
 
@@ -652,6 +671,35 @@
       </button>
       <button class="btn" onclick="sendKey('KEY_FF')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0f0f0" stroke-width="2" stroke-linecap="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+      </button>
+    </div>
+  </div>
+  <!-- APP SHORTCUTS -->
+  <div class="section">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      <button onclick="launchTvApp('3201907018807','Netflix')" style="background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 4px;cursor:pointer;box-shadow:0 4px 0 #0a0a0a;display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <svg width="28" height="18" viewBox="0 0 28 18"><path d="M0 9C0 4 4.7 0 10.5 0c3 0 5.8 1.1 7.8 2.9L28 0v18l-9.7-2.9C16.3 16.9 13.5 18 10.5 18 4.7 18 0 14 0 9z" fill="#E50914"/></svg>
+        <span style="font-size:10px;color:#f0f0f0;font-weight:700;">Netflix</span>
+      </button>
+      <button onclick="launchTvApp('111299001912','YouTube')" style="background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 4px;cursor:pointer;box-shadow:0 4px 0 #0a0a0a;display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <svg width="28" height="18" viewBox="0 0 28 18"><rect width="28" height="18" rx="4" fill="#FF0000"/><polygon points="11,4 22,9 11,14" fill="white"/></svg>
+        <span style="font-size:10px;color:#f0f0f0;font-weight:700;">YouTube</span>
+      </button>
+      <button onclick="launchTvApp('3201910019365','Prime Video')" style="background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 4px;cursor:pointer;box-shadow:0 4px 0 #0a0a0a;display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <svg width="28" height="18" viewBox="0 0 28 18"><rect width="28" height="18" rx="4" fill="#00A8E0"/><text x="14" y="13" text-anchor="middle" fill="white" font-size="8" font-weight="bold">prime</text></svg>
+        <span style="font-size:10px;color:#f0f0f0;font-weight:700;">Prime</span>
+      </button>
+      <button onclick="launchTvApp('3201901017640','Disney+')" style="background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 4px;cursor:pointer;box-shadow:0 4px 0 #0a0a0a;display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <svg width="28" height="18" viewBox="0 0 28 18"><rect width="28" height="18" rx="4" fill="#113CCF"/><text x="14" y="13" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Disney+</text></svg>
+        <span style="font-size:10px;color:#f0f0f0;font-weight:700;">Disney+</span>
+      </button>
+      <button onclick="launchTvApp('3201606009684','Spotify')" style="background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 4px;cursor:pointer;box-shadow:0 4px 0 #0a0a0a;display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <svg width="28" height="18" viewBox="0 0 28 18"><rect width="28" height="18" rx="4" fill="#1DB954"/><circle cx="14" cy="9" r="6" fill="#1DB954" stroke="white" stroke-width="0"/><path d="M9 7c3-1 6-1 9 1M9 10c2-1 5-1 8 1M10 13c2-1 4-1 6 1" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+        <span style="font-size:10px;color:#f0f0f0;font-weight:700;">Spotify</span>
+      </button>
+      <button onclick="launchTvApp('3201511006428','Rakuten')" style="background:radial-gradient(circle at 35% 35%,#3a3a3a,#1a1a1a);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 4px;cursor:pointer;box-shadow:0 4px 0 #0a0a0a;display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <svg width="28" height="18" viewBox="0 0 28 18"><rect width="28" height="18" rx="4" fill="#BF0000"/><text x="14" y="13" text-anchor="middle" fill="white" font-size="7" font-weight="bold">Rakuten</text></svg>
+        <span style="font-size:10px;color:#f0f0f0;font-weight:700;">Rakuten</span>
       </button>
     </div>
   </div>
@@ -829,7 +877,13 @@
   let connected = false;
   let reconnectTimer = null;
 
-  const APP_NAME = btoa('MyTVRemote');
+  // Generate unique device name per user
+  let deviceName = localStorage.getItem('device_name');
+  if (!deviceName) {
+    deviceName = 'TVRemote-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+    localStorage.setItem('device_name', deviceName);
+  }
+  const APP_NAME = btoa(deviceName);
 
   // ─── OVERLAY ──────────────────────────────────────────────
   function startConnect() {
@@ -838,7 +892,7 @@
     TV_IP = input;
     localStorage.setItem('tv_ip', TV_IP);
     document.getElementById('overlay').style.display = 'none';
-
+    updateCertLink();
     connect();
   }
 
@@ -915,8 +969,7 @@
     }
   }
 
-  function updateWifiIcon(iconId, state) {
-    // state: 'connected' | 'disconnected' | 'connecting' | 'standby'
+  function updateWifiIcon(iconId, state) { return;
     const el = document.getElementById(iconId);
     if (!el) return;
     if (state === 'connecting') {
@@ -968,6 +1021,14 @@
   }
 
   // ─── LAUNCH APP ───────────────────────────────────────────
+  function launchTvApp(appId, name) {
+    fetch(`http://${TV_IP}:8001/api/v2/applications/${appId}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    }).then(() => showToast(`🚀 Launching ${name}`))
+      .catch(e => showToast('❌ Could not launch app'));
+  }
+
   function launchApp(appId) {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       showToast('Not connected');
@@ -987,45 +1048,117 @@
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  // ─── UPDATE CHECKER ───────────────────────────────────────
-  const CURRENT_VERSION = '1.08.2355';
-  let latestApkUrl = '';
-
-  async function checkForUpdates() {
-    try {
-      const res = await fetch('https://api.github.com/repos/JohnnyDeey/tv-remote-app/releases/latest');
-      const data = await res.json();
-      const latest = data.tag_name?.replace('v', '') || '0';
-      if (latest !== CURRENT_VERSION) {
-        latestApkUrl = data.assets?.find(a => a.name.endsWith('.apk'))?.browser_download_url || data.html_url;
-        const btn = document.getElementById('update-btn');
-        if (btn) { btn.style.display = 'flex'; }
-      }
-    } catch(e) {}
+  // ─── SILENT STATUS DOTS ───────────────────────────────────
+  function updateDot(id, color) {
+    const dot = document.getElementById(id);
+    if (dot) dot.style.background = color;
   }
 
-  async function downloadUpdate() {
-    if (!latestApkUrl) return;
-    showToast('⬇️ Downloading update...');
+  async function pingTVDot() {
     try {
-      const response = await fetch(latestApkUrl);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'tv-remote-update.apk';
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('✅ Download complete — tap to install');
+      await fetch(`http://${TV_IP}:8001/api/v2/`, { signal: AbortSignal.timeout(2000) });
+      updateDot('dot-tv', '#66bb6a'); // green
     } catch(e) {
-      // Fallback to browser
-      window.open(latestApkUrl, '_blank');
+      updateDot('dot-tv', '#ef5350'); // red
     }
   }
 
-  setTimeout(checkForUpdates, 5000);
-  setInterval(checkForUpdates, 30 * 60 * 1000);
+  function pingDigiDot() {
+    if (digiWs && digiWs.readyState === WebSocket.OPEN) {
+      updateDot('dot-digi', '#66bb6a'); // green
+      updateDot('dot-bridge', '#4fc3f7'); // blue
+    } else {
+      updateDot('dot-digi', '#ef5350'); // red
+      updateDot('dot-bridge', '#ef5350'); // red
+    }
+  }
 
+  setInterval(pingTVDot, 3000);
+  setInterval(pingDigiDot, 1000);
+
+  async function checkAndUpdate() {
+    try {
+      const res = await fetch('https://api.github.com/repos/JohnnyDeey/tv-remote-app/releases/latest?t=' + Date.now());
+      const data = await res.json();
+      const latest = data.tag_name?.replace('v', '') || '0';
+      const current = typeof CURRENT_VERSION !== 'undefined' ? CURRENT_VERSION : null;
+      if (!current) { window.open(data.html_url, '_blank'); return; }
+      const parseVer = v => v.split('.').map(Number);
+      const isNewer = (a, b) => {
+        const av = parseVer(a), bv = parseVer(b);
+        for (let i = 0; i < Math.max(av.length, bv.length); i++) {
+          const d = (av[i]||0) - (bv[i]||0);
+          if (d > 0) return true;
+          if (d < 0) return false;
+        }
+        return false;
+      };
+      if (isNewer(latest, current)) {
+        window.open(data.html_url, '_blank');
+      } else {
+        showToast('✅ You have the latest version');
+      }
+    } catch(e) {
+      showToast('❌ Could not check for updates');
+    }
+  }
+
+  function showSetupWizard() {
+    const wizard = document.createElement('div');
+    wizard.id = 'setup-wizard';
+    wizard.style.cssText = 'position:fixed;inset:0;background:#0a0a0a;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;';
+    const slides = [
+      { icon: '📺', title: 'Welcome to TV Remote', desc: 'Control your Samsung TV and DIGI decoder from your phone. Let\'s set it up in 2 steps.', input: null, hint: null },
+      { icon: '📡', title: 'Samsung TV IP Address', desc: 'Find your TV IP address:', hint: 'On TV: Settings → General → Network → Network Status → IP Address', input: { id: 'wizard-tv-ip', placeholder: '192.168.68.106', label: 'TV IP Address' } },
+      { icon: '🎮', title: 'DIGI Decoder IP Address', desc: 'Find your decoder IP address:', hint: 'On Decoder: Settings → Network → IP Address', input: { id: 'wizard-bridge-ip', placeholder: '192.168.68.107', label: 'Decoder IP Address' } },
+      { icon: '✅', title: 'All Set!', desc: 'Your remote is ready. If buttons stop working after a power cut, update the IPs in Settings (⚙).', input: null, hint: null }
+    ];
+    let current = 0;
+    function renderSlide() {
+      const s = slides[current];
+      wizard.innerHTML = `
+        <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:20px;">
+          <div style="text-align:center;font-size:56px;">${s.icon}</div>
+          <div style="text-align:center;color:#f0f0f0;font-size:20px;font-weight:700;">${s.title}</div>
+          <div style="text-align:center;color:#888;font-size:14px;">${s.desc}</div>
+          ${s.hint ? `<div style="background:#1e1e1e;border:1px solid #333;border-radius:10px;padding:12px;color:#4fc3f7;font-size:12px;">💡 ${s.hint}</div>` : ''}
+          ${s.input ? `<div style="display:flex;flex-direction:column;gap:8px;"><label style="color:#888;font-size:12px;">${s.input.label}</label><input id="${s.input.id}" type="text" placeholder="${s.input.placeholder}" inputmode="decimal" style="background:#1e1e1e;border:1px solid #4fc3f7;border-radius:8px;padding:12px;color:#f0f0f0;font-size:16px;outline:none;text-align:center;"></div>` : ''}
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            ${current > 0 ? `<button onclick="wizardPrev()" style="flex:1;padding:14px;background:#2a2a2a;border:1px solid #333;border-radius:10px;color:#888;font-size:14px;cursor:pointer;">← Back</button>` : ''}
+            <button onclick="wizardNext()" style="flex:2;padding:14px;background:#4fc3f7;border:none;border-radius:10px;color:#000;font-size:15px;font-weight:700;cursor:pointer;">${current === slides.length - 1 ? 'Start Using App →' : 'Next →'}</button>
+          </div>
+          <div style="display:flex;justify-content:center;gap:6px;">${slides.map((_, i) => `<div style="width:8px;height:8px;border-radius:50%;background:${i===current?'#4fc3f7':'#333'};"></div>`).join('')}</div>
+        </div>`;
+    }
+    window.wizardNext = function() {
+      if (current === 1) {
+        const ip = document.getElementById('wizard-tv-ip')?.value.trim();
+        if (!ip) { showToast('Enter TV IP address'); return; }
+        TV_IP = ip;
+        localStorage.setItem('tv_ip', ip);
+        document.getElementById('ip-input').value = ip;
+      }
+      if (current === 2) {
+        const ip = document.getElementById('wizard-bridge-ip')?.value.trim();
+        if (!ip) { showToast('Enter Decoder IP address'); return; }
+        localStorage.setItem('bridge_ip', ip);
+      }
+      if (current === slides.length - 1) {
+        document.getElementById('setup-wizard').remove();
+        document.getElementById('overlay').style.display = 'none';
+        connect();
+        connectDigi();
+        return;
+      }
+      current++;
+      renderSlide();
+    };
+    window.wizardPrev = function() { current--; renderSlide(); };
+    renderSlide();
+    document.body.appendChild(wizard);
+  }
+
+  
   // ─── APP LAUNCHER ─────────────────────────────────────────
   const APP_NAMES = {
     'com.netflix.mediaclient': 'Netflix',
@@ -1134,6 +1267,8 @@
     document.getElementById('apps-modal')?.remove();
     const search = document.getElementById('app-search');
     if (search) search.value = '';
+    const name = (sharedAppMeta[pkg]?.name) || APP_NAMES[pkg] || pkg.split('.').pop();
+    showToast(`🚀 Launching ${name}`);
   }
 
   let appLongPressTimer = null;
@@ -1211,50 +1346,40 @@
     }
   });
 
-    function tvPower() {
-    if (ws && ws.readyState === WebSocket.OPEN && connected) {
-      // TV is on — power off and immediately kill the zombie socket
-      sendKey('KEY_POWER');
-    } else if (ws && ws.readyState === WebSocket.OPEN && !connected) {
-      // WS open but not confirmed yet — wait briefly then retry
+  async function tvPower() {
+    // Ping TV first to get real status
+    let tvReachable = false;
+    try {
+      await fetch(`http://${TV_IP}:8001/api/v2/`, { signal: AbortSignal.timeout(1500) });
+      tvReachable = true;
+    } catch(e) {}
 
-      setTimeout(() => tvPower(), 1500);
-      return;
+    if (tvReachable && connected) {
+      // TV is on and WS connected — turn off
+      sendKey('KEY_POWER');
       setTimeout(() => {
-        manualDisconnect = true; // Stop auto-reconnect
+        manualDisconnect = true;
         if (ws) { try { ws.close(); } catch(e){} ws = null; }
         connected = false;
       }, 1000);
-    } else {
-      // TV is off — fresh connection attempt with timeout
-     
+    } else if (tvReachable && !connected) {
+      // TV reachable but WS dropped — reconnect first then toggle
       manualDisconnect = false;
-      
-      // Try fresh connection
-      const testWs = new WebSocket(`wss://${TV_IP}:8002/api/v2/channels/samsung.remote.control?name=${APP_NAME}${token ? '&token='+token : ''}`);
-      const timeout = setTimeout(() => {
-        // Connection failed — TV network is asleep — send WoL
-        testWs.close();
-              if (digiWs && digiWs.readyState === WebSocket.OPEN) {
+      connect();
+      setTimeout(() => {
+        if (connected) sendKey('KEY_POWER');
+      }, 3000);
+    } else {
+      // TV not reachable — deep standby — send WoL
+      if (digiWs && digiWs.readyState === WebSocket.OPEN) {
         digiWs.send(JSON.stringify({ action: 'wol' }));
-      } else {
-        showToast('⚠️ Connect decoder first to wake TV');
-      }
-        // Retry connection after WoL
+        manualDisconnect = false;
         setTimeout(() => connect(), 4000);
         setTimeout(() => connect(), 8000);
         setTimeout(() => connect(), 13000);
-      }, 2000);
-      
-      testWs.onopen = () => {
-        // TV responded — use this connection
-        clearTimeout(timeout);
-        if (ws) { try { ws.close(); } catch(e){} }
-        ws = testWs;
-        // Send power on
-        sendKey('KEY_POWER');
-      };
-      testWs.onerror = () => clearTimeout(timeout);
+      } else {
+        showToast('⚠️ Connect decoder first to wake TV');
+      }
     }
   }
 
@@ -1669,7 +1794,7 @@
   
 
   
-
+  function updateCertLink() {}
 
   function updateTvIp() {
     const ip = document.getElementById('tv-ip-input').value.trim();
@@ -1677,7 +1802,7 @@
     TV_IP = ip;
     localStorage.setItem('tv_ip', ip);
     document.getElementById('settings-ip').textContent = ip;
-
+    updateCertLink();
     manualDisconnect = false;
     if (ws) { try { ws.close(); } catch(e){} ws = null; }
     connected = false;
@@ -1687,8 +1812,12 @@
 
   function showSettings() {
     document.getElementById('settings-ip').textContent = TV_IP || '(not set)';
+    const dn = document.getElementById('device-name-display');
+    if (dn) dn.textContent = localStorage.getItem('device_name') || 'Unknown';
+    const verEl = document.getElementById('app-version-display');
+    if (verEl) verEl.textContent = typeof CURRENT_VERSION !== 'undefined' ? CURRENT_VERSION : 'PWA';
     document.getElementById('tv-ip-input').value = TV_IP;
-
+    updateCertLink();
     const savedIp = localStorage.getItem('bridge_ip') || '';
     document.getElementById('bridge-ip-input').value = savedIp;
     document.getElementById('bridge-ip-display').textContent = savedIp ? savedIp + ':8765' : '(not set)';
@@ -1879,12 +2008,11 @@
   }
 
   // ─── INIT ─────────────────────────────────────────────────
-    window.onload = () => {
+  window.onload = () => {
     const savedTvIp = localStorage.getItem('tv_ip');
     const savedBridgeIp = localStorage.getItem('bridge_ip');
-    
+
     if (!savedTvIp || !savedBridgeIp) {
-      // First time — show setup wizard
       showSetupWizard();
     } else {
       TV_IP = savedTvIp;
@@ -1895,108 +2023,11 @@
       }
       connectDigi();
     }
-
+    updateCertLink();
     switchDevice(currentDevice);
-  };
 
-  function showSetupWizard() {
-    const wizard = document.createElement('div');
-    wizard.id = 'setup-wizard';
-    wizard.style.cssText = 'position:fixed;inset:0;background:#0a0a0a;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;';
     
-    const slides = [
-      {
-        icon: '📺',
-        title: 'Welcome to TV Remote',
-        desc: 'Control your Samsung TV and DIGI decoder from your phone. Let\'s set it up in 2 steps.',
-        input: null,
-        hint: null
-      },
-      {
-        icon: '📡',
-        title: 'Samsung TV IP Address',
-        desc: 'Find your TV IP address:',
-        hint: 'On TV: Settings → General → Network → Network Status → IP Address',
-        input: { id: 'wizard-tv-ip', placeholder: '192.168.68.106', label: 'TV IP Address' }
-      },
-      {
-        icon: '🎮',
-        title: 'DIGI Decoder IP Address',
-        desc: 'Find your decoder IP address:',
-        hint: 'On Decoder: Settings → Network → IP Address',
-        input: { id: 'wizard-bridge-ip', placeholder: '192.168.68.107', label: 'Decoder IP Address' }
-      },
-      {
-        icon: '✅',
-        title: 'All Set!',
-        desc: 'Your remote is ready. If buttons stop working after a power cut, update the IPs in Settings (⚙).',
-        input: null,
-        hint: null
-      }
-    ];
-    
-    let current = 0;
-    
-    function renderSlide() {
-      const s = slides[current];
-      wizard.innerHTML = `
-        <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:20px;">
-          <div style="text-align:center;font-size:56px;">${s.icon}</div>
-          <div style="text-align:center;color:#f0f0f0;font-size:20px;font-weight:700;">${s.title}</div>
-          <div style="text-align:center;color:#888;font-size:14px;">${s.desc}</div>
-          ${s.hint ? `<div style="background:#1e1e1e;border:1px solid #333;border-radius:10px;padding:12px;color:#4fc3f7;font-size:12px;">💡 ${s.hint}</div>` : ''}
-          ${s.input ? `
-            <div style="display:flex;flex-direction:column;gap:8px;">
-              <label style="color:#888;font-size:12px;">${s.input.label}</label>
-              <input id="${s.input.id}" type="text" placeholder="${s.input.placeholder}" inputmode="decimal"
-                style="background:#1e1e1e;border:1px solid #4fc3f7;border-radius:8px;padding:12px;color:#f0f0f0;font-size:16px;outline:none;text-align:center;">
-            </div>` : ''}
-          <div style="display:flex;gap:10px;margin-top:10px;">
-            ${current > 0 ? `<button onclick="wizardPrev()" style="flex:1;padding:14px;background:#2a2a2a;border:1px solid #333;border-radius:10px;color:#888;font-size:14px;cursor:pointer;">← Back</button>` : ''}
-            <button onclick="wizardNext()" style="flex:2;padding:14px;background:#4fc3f7;border:none;border-radius:10px;color:#000;font-size:15px;font-weight:700;cursor:pointer;">
-              ${current === slides.length - 1 ? 'Start Using App →' : 'Next →'}
-            </button>
-          </div>
-          <div style="display:flex;justify-content:center;gap:6px;">
-            ${slides.map((_, i) => `<div style="width:8px;height:8px;border-radius:50%;background:${i===current?'#4fc3f7':'#333'};"></div>`).join('')}
-          </div>
-        </div>`;
-    }
-    
-    window.wizardNext = function() {
-      // Save inputs
-      if (current === 1) {
-        const ip = document.getElementById('wizard-tv-ip')?.value.trim();
-        if (!ip) { showToast('Enter TV IP address'); return; }
-        TV_IP = ip;
-        localStorage.setItem('tv_ip', ip);
-        document.getElementById('ip-input').value = ip;
-      }
-      if (current === 2) {
-        const ip = document.getElementById('wizard-bridge-ip')?.value.trim();
-        if (!ip) { showToast('Enter Decoder IP address'); return; }
-        localStorage.setItem('bridge_ip', ip);
-      }
-      if (current === slides.length - 1) {
-        // Done
-        document.getElementById('setup-wizard').remove();
-        document.getElementById('overlay').style.display = 'none';
-        connect();
-        connectDigi();
-        return;
-      }
-      current++;
-      renderSlide();
-    };
-    
-    window.wizardPrev = function() {
-      current--;
-      renderSlide();
-    };
-    
-    renderSlide();
-    document.body.appendChild(wizard);
-  }
+  };
 
   // ─── TRACKPAD ─────────────────────────────────────────────
   let manualDisconnect = false;
@@ -2142,6 +2173,44 @@
     ]
   };
 
+
+  // --- UPDATE CHECKER ---
+  const CURRENT_VERSION = '1.8.557';
+  let latestApkUrl = '';
+  async function checkForUpdates() {
+    try {
+      const res = await fetch('https://api.github.com/repos/JohnnyDeey/tv-remote-app/releases/latest');
+      const data = await res.json();
+      const latest = data.tag_name?.replace('v', '') || '0';
+      const parseVer = v => v.split('.').map(Number);
+      const isNewer = (a, b) => {
+        const av = parseVer(a), bv = parseVer(b);
+        for (let i = 0; i < Math.max(av.length, bv.length); i++) {
+          const d = (av[i]||0) - (bv[i]||0);
+          if (d > 0) return true;
+          if (d < 0) return false;
+        }
+        return false;
+      };
+      if (isNewer(latest, CURRENT_VERSION)) {
+        latestApkUrl = data.assets?.find(a => a.name.endsWith('.apk'))?.browser_download_url || data.html_url;
+        const btn = document.getElementById('update-btn');
+        if (btn) btn.style.display = 'flex';
+      }
+    } catch(e) {}
+  }
+  function downloadUpdate() {
+    if (!latestApkUrl) return;
+    const a = document.createElement('a');
+    a.href = latestApkUrl;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+  setTimeout(checkForUpdates, 5000);
+  setInterval(checkForUpdates, 30 * 60 * 1000);
 </script>
 </body>
 </html>
