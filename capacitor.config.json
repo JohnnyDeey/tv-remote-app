@@ -1,8 +1,14 @@
 {
   "appId": "io.github.johnnydeey.tvremote",
   "appName": "TV Remote",
+  "appendUserAgent": "TVRemoteApp/1.8.570",
   "webDir": "www",
   "server": {
+    "url": "https://tv-remote-steel.vercel.app",
+    "cleartext": true,
     "androidScheme": "http"
+  },
+  "android": {
+    "allowMixedContent": true
   }
 }

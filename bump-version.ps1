@@ -91,3 +91,10 @@ $utf8NoBom = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText("$PSScriptRoot\android\app\build.gradle", $buildGradle, $utf8NoBom)
 Write-Host "Android version updated"
 
+# keep the app's reported version in step with the build
+$cfgPath = "$PSScriptRoot\capacitor.config.json"
+$cfg = [System.IO.File]::ReadAllText($cfgPath)
+$cfg = $cfg -replace 'TVRemoteApp/[\d.]+', "TVRemoteApp/$version"
+[System.IO.File]::WriteAllText($cfgPath, $cfg, (New-Object System.Text.UTF8Encoding $false))
+Write-Host "Config version updated"
+
