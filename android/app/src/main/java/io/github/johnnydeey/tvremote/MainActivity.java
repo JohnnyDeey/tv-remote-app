@@ -11,8 +11,12 @@ import com.getcapacitor.BridgeWebViewClient;
 public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        registerPlugin(FloatingButtonPlugin.class);
+        registerPlugin(IrBlasterPlugin.class);
+        registerPlugin(AdbPlugin.class);
         super.onCreate(savedInstanceState);
         WebView webView = getBridge().getWebView();
+        WebView.setWebContentsDebuggingEnabled(true);
         WebSettings settings = webView.getSettings();
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
